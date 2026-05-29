@@ -41,7 +41,7 @@ export default function KanbanPage() {
     ])
     setColumns(colData ?? [])
     setCards((cardData as KanbanCardType[]) ?? [])
-    setSuppliers(supData ?? [])
+    setSuppliers((supData as Supplier[]) ?? [])
     setInventoryItems((invData as InventoryItem[]) ?? [])
     setLoading(false)
   }, [])
