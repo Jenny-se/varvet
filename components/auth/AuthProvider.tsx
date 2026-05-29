@@ -18,22 +18,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
 
+  // Fetch session once on mount and subscribe to changes
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setLoading(false)
-      if (!session && pathname !== '/login') router.push('/login')
-      if (session && pathname === '/login') router.push('/dashboard')
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
-      if (!session) router.push('/login')
-      if (session && pathname === '/login') router.push('/dashboard')
     })
 
     return () => subscription.unsubscribe()
-  }, [pathname, router])
+  }, [])
+
+  // Handle redirects separately, only after loading is done
+  useEffect(() => {
+    if (loading) return
+    if (!session && pathname !== '/login') router.replace('/login')
+    if (session && pathname === '/login') router.replace('/dashboard')
+  }, [session, loading, pathname, router])
 
   if (loading) {
     return (
