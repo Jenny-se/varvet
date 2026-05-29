@@ -39,7 +39,7 @@ export function Sidebar() {
       <div className="px-6 py-6 border-b border-linen-200">
         <div className="flex items-center gap-2.5">
           <Image
-            src="/varvet_logo.jpg"
+            src="/varvet_logo.JPG"
             alt="Varvet"
             width={36}
             height={36}
@@ -110,7 +110,7 @@ export function Sidebar() {
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-linen-200 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Image
-            src="/varvet_logo.jpg"
+            src="/varvet_logo.JPG"
             alt="Varvet"
             width={28}
             height={28}

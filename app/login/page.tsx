@@ -30,7 +30,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <Image
-            src="/varvet_logo.jpg"
+            src="/varvet_logo.JPG"
             alt="Varvet"
             width={72}
             height={72}
