@@ -10,8 +10,11 @@ import {
   Leaf,
   Menu,
   X,
+  LogOut,
 } from 'lucide-react'
 import { useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/components/auth/AuthProvider'
 
 const navItems = [
   { href: '/dashboard', label: 'Översikt', icon: LayoutDashboard },
@@ -23,6 +26,12 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { session } = useAuth()
+  const userEmail = session?.user?.email ?? ''
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+  }
 
   const navContent = (
     <>
@@ -65,10 +74,23 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="px-6 py-4 border-t border-linen-200">
-        <p className="text-xs text-warm-400">Gustavsberg, Sverige</p>
-        <p className="text-xs text-warm-400 mt-0.5">Naturfiber &amp; gemenskap</p>
+      {/* User + Logout */}
+      <div className="px-3 py-3 border-t border-linen-200">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg">
+          <div className="w-6 h-6 rounded-full bg-sage-200 flex items-center justify-center flex-shrink-0">
+            <span className="text-xs font-semibold text-sage-700">
+              {userEmail.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <p className="text-xs text-warm-600 truncate flex-1">{userEmail}</p>
+          <button
+            onClick={handleLogout}
+            title="Logga ut"
+            className="p-1 rounded text-warm-400 hover:text-warm-700 hover:bg-cream-200 transition-colors flex-shrink-0"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </>
   )
@@ -108,7 +130,6 @@ export function Sidebar() {
           </aside>
         </div>
       )}
-
     </>
   )
 }
