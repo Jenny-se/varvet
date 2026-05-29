@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Leaf } from 'lucide-react'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -29,9 +29,13 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-sage-500 flex items-center justify-center mb-4 shadow-sm">
-            <Leaf className="w-7 h-7 text-white" />
-          </div>
+          <Image
+            src="/varvet_logo.jpg"
+            alt="Varvet"
+            width={72}
+            height={72}
+            className="rounded-2xl shadow-sm mb-4"
+          />
           <h1 className="text-2xl font-semibold text-warm-900 tracking-tight">Varvet</h1>
           <p className="text-sm text-warm-500 mt-1">Studio CRM · Gustavsberg</p>
         </div>

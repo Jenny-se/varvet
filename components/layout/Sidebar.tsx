@@ -7,12 +7,12 @@ import {
   Package,
   Boxes,
   KanbanSquare,
-  Leaf,
   Menu,
   X,
   LogOut,
 } from 'lucide-react'
 import { useState } from 'react'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/auth/AuthProvider'
 
@@ -38,9 +38,13 @@ export function Sidebar() {
       {/* Logo / Brand */}
       <div className="px-6 py-6 border-b border-linen-200">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-sage-500 flex items-center justify-center flex-shrink-0">
-            <Leaf className="w-4 h-4 text-white" />
-          </div>
+          <Image
+            src="/varvet_logo.jpg"
+            alt="Varvet"
+            width={36}
+            height={36}
+            className="rounded-lg flex-shrink-0"
+          />
           <div>
             <h1 className="text-base font-semibold text-warm-900 tracking-tight">Varvet</h1>
             <p className="text-xs text-warm-500">Studio CRM</p>
@@ -105,9 +109,13 @@ export function Sidebar() {
       {/* Mobile top bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-linen-200 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-md bg-sage-500 flex items-center justify-center">
-            <Leaf className="w-3.5 h-3.5 text-white" />
-          </div>
+          <Image
+            src="/varvet_logo.jpg"
+            alt="Varvet"
+            width={28}
+            height={28}
+            className="rounded-md"
+          />
           <span className="font-semibold text-warm-900 text-sm">Varvet</span>
         </div>
         <button
