@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --background: #FAF8F5;
+  --foreground: #2C2A27;
+}
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-xl border border-cream-300 shadow-sm;
+  }
+
+  .btn-primary {
+    @apply bg-sage-500 hover:bg-sage-600 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-150 text-sm;
+  }
+
+  .btn-secondary {
+    @apply bg-cream-200 hover:bg-cream-300 text-warm-800 font-medium px-4 py-2 rounded-lg transition-colors duration-150 text-sm border border-cream-400;
+  }
+
+  .btn-danger {
+    @apply bg-red-50 hover:bg-red-100 text-red-700 font-medium px-4 py-2 rounded-lg transition-colors duration-150 text-sm border border-red-200;
+  }
+
+  .input-field {
+    @apply w-full border border-cream-400 rounded-lg px-3 py-2 text-sm text-warm-900 bg-white placeholder:text-warm-400 focus:outline-none focus:ring-2 focus:ring-sage-300 focus:border-sage-400 transition-colors duration-150;
+  }
+
+  .label {
+    @apply block text-xs font-medium text-warm-600 mb-1.5;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #C8B99A #FAF8F5;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #FAF8F5;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #C8B99A;
+    border-radius: 3px;
+  }
+}
