@@ -7,6 +7,7 @@ import { StatsCard } from '@/components/dashboard/StatsCard'
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed'
 import { Package, Boxes, KanbanSquare, TrendingUp, AlertTriangle, Calendar } from 'lucide-react'
 import { PriorityBadge, CardCategoryBadge } from '@/components/ui/Badge'
+import Link from 'next/link'
 import { format, isPast, isToday } from 'date-fns'
 import { sv } from 'date-fns/locale'
 
@@ -158,7 +159,11 @@ export default function DashboardPage() {
                   const isOverdue = isPast(d) && !isToday(d)
                   const todayDue = isToday(d)
                   return (
-                    <div key={card.id} className="flex items-center justify-between py-2 border-b border-cream-300 last:border-0">
+                    <Link
+                      key={card.id}
+                      href="/kanban"
+                      className="flex items-center justify-between py-2 border-b border-cream-300 last:border-0 hover:bg-cream-200 rounded-lg px-2 -mx-2 transition-colors"
+                    >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <PriorityBadge priority={card.priority} />
                         <p className="text-sm text-warm-800 truncate">{card.title}</p>
@@ -169,7 +174,7 @@ export default function DashboardPage() {
                       }`}>
                         {todayDue ? 'Idag' : isOverdue ? 'Försenad' : format(d, 'd MMM', { locale: sv })}
                       </span>
-                    </div>
+                    </Link>
                   )
                 })}
               </div>
@@ -184,14 +189,18 @@ export default function DashboardPage() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: 'Hög', count: highPriority, color: 'bg-red-100 text-red-700' },
-                { label: 'Medel', count: mediumPriority, color: 'bg-amber-100 text-amber-700' },
-                { label: 'Låg', count: lowPriority, color: 'bg-sage-100 text-sage-700' },
-              ].map(({ label, count, color }) => (
-                <div key={label} className={`rounded-xl p-4 ${color} text-center`}>
+                { label: 'Hög', count: highPriority, color: 'bg-red-100 text-red-700 hover:bg-red-200', priority: 'high' },
+                { label: 'Medel', count: mediumPriority, color: 'bg-amber-100 text-amber-700 hover:bg-amber-200', priority: 'medium' },
+                { label: 'Låg', count: lowPriority, color: 'bg-sage-100 text-sage-700 hover:bg-sage-200', priority: 'low' },
+              ].map(({ label, count, color, priority }) => (
+                <Link
+                  key={label}
+                  href={`/kanban?priority=${priority}`}
+                  className={`rounded-xl p-4 ${color} text-center transition-colors block`}
+                >
                   <p className="text-2xl font-bold">{count}</p>
                   <p className="text-xs font-medium mt-1">{label}</p>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

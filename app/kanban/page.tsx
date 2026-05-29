@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { DragDropContext, DropResult } from '@hello-pangea/dnd'
 import { supabase } from '@/lib/supabase'
 import { KanbanColumn as KanbanColumnType, KanbanCard as KanbanCardType, Supplier, InventoryItem } from '@/lib/types'
@@ -13,7 +14,13 @@ import { Plus } from 'lucide-react'
 
 type CardInput = Omit<KanbanCardType, 'id' | 'created_at' | 'updated_at' | 'supplier' | 'inventory'>
 
+const PRIORITY_LABELS: Record<string, string> = { high: 'Hög', medium: 'Medel', low: 'Låg' }
+
 export default function KanbanPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const priorityFilter = searchParams.get('priority')
+
   const [columns, setColumns] = useState<KanbanColumnType[]>([])
   const [cards, setCards] = useState<KanbanCardType[]>([])
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
@@ -51,6 +58,7 @@ export default function KanbanPage() {
   function getCardsForColumn(columnId: string) {
     return cards
       .filter(c => c.column_id === columnId)
+      .filter(c => priorityFilter ? c.priority === priorityFilter : true)
       .sort((a, b) => a.position - b.position)
   }
 
@@ -169,6 +177,19 @@ export default function KanbanPage() {
             {cards.filter(c => c.column_id !== columns.find(col => col.title === 'Klart')?.id).length} öppna uppgifter
           </p>
         </div>
+        {priorityFilter && (
+          <div className="flex items-center gap-2 bg-cream-200 border border-cream-300 rounded-lg px-3 py-1.5">
+            <span className="text-xs text-warm-700">
+              Prioritet: <strong>{PRIORITY_LABELS[priorityFilter] ?? priorityFilter}</strong>
+            </span>
+            <button
+              onClick={() => router.push('/kanban')}
+              className="text-warm-400 hover:text-warm-700 text-xs ml-1"
+            >
+              ✕ Rensa
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Board */}
