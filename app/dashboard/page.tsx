@@ -75,7 +75,6 @@ export default function DashboardPage() {
       {/* Welcome */}
       <div className="mb-8">
         <h1 className="text-xl font-semibold text-warm-900">Välkommen till Varvet</h1>
-        <p className="text-sm text-warm-500 mt-0.5">Gustavsberg · Naturfiber &amp; gemenskap</p>
       </div>
 
       {/* Stats row */}
