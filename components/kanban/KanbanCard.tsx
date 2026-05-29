@@ -2,7 +2,7 @@
 
 import { Draggable } from '@hello-pangea/dnd'
 import { KanbanCard as KanbanCardType } from '@/lib/types'
-import { Calendar, Link2, Edit2, Trash2 } from 'lucide-react'
+import { Calendar, Link2, Edit2, Trash2, User } from 'lucide-react'
 import { PriorityBadge, CardCategoryBadge } from '@/components/ui/Badge'
 import { format, isPast, isToday } from 'date-fns'
 import { sv } from 'date-fns/locale'
@@ -60,9 +60,15 @@ export function KanbanCard({ card, index, onEdit, onDelete }: KanbanCardProps) {
           )}
 
           {/* Badges */}
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
+          <div className="mt-2.5 flex flex-wrap gap-1.5 items-center">
             <PriorityBadge priority={card.priority} />
             {card.category_tag && <CardCategoryBadge category={card.category_tag} />}
+            {card.assignee && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-linen-100 text-bark-600">
+                <User className="w-2.5 h-2.5" />
+                {card.assignee}
+              </span>
+            )}
           </div>
 
           {/* Footer */}

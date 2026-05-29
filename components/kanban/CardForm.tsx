@@ -27,6 +27,7 @@ export function CardForm({ columns, suppliers, inventoryItems, initial, onSubmit
     due_date: initial?.due_date ?? null,
     priority: initial?.priority ?? 'medium',
     category_tag: initial?.category_tag ?? null,
+    assignee: initial?.assignee ?? null,
     supplier_id: initial?.supplier_id ?? null,
     inventory_id: initial?.inventory_id ?? null,
     position: initial?.position ?? 0,
@@ -97,6 +98,19 @@ export function CardForm({ columns, suppliers, inventoryItems, initial, onSubmit
           >
             <option value="">Ingen kategori</option>
             {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="label">Ansvarig</label>
+          <select
+            className="input-field"
+            value={form.assignee ?? ''}
+            onChange={e => set('assignee', (e.target.value as 'Jenny' | 'Cissi' | 'Båda') || null)}
+          >
+            <option value="">Ingen</option>
+            <option value="Jenny">Jenny</option>
+            <option value="Cissi">Cissi</option>
+            <option value="Båda">Båda</option>
           </select>
         </div>
         <div>

@@ -53,6 +53,8 @@ export interface KanbanColumn {
   cards?: KanbanCard[]
 }
 
+export type Assignee = 'Jenny' | 'Cissi' | 'Båda'
+
 export interface KanbanCard {
   id: string
   column_id: string
@@ -61,6 +63,7 @@ export interface KanbanCard {
   due_date: string | null
   priority: Priority
   category_tag: CardCategory | null
+  assignee: Assignee | null
   supplier_id: string | null
   supplier?: Supplier
   inventory_id: string | null
