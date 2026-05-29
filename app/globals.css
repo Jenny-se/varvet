@@ -5,8 +5,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --background: #FAF8F5;
-  --foreground: #2C2A27;
+  --background: #F8F1E2;
+  --foreground: #1E1008;
 }
 
 @layer base {

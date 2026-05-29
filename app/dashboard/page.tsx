@@ -28,7 +28,7 @@ export default function DashboardPage() {
       supabase.from('suppliers').select('*'),
       supabase.from('inventory').select('*'),
       supabase.from('kanban_cards').select('*, supplier:suppliers(company_name), inventory:inventory(product_name)'),
-      supabase.from('activity_feed').select('*').order('created_at', { ascending: false }).limit(20),
+      supabase.from('activity_feed').select('*').order('created_at', { ascending: false }).limit(5),
     ])
     setSuppliers(supData ?? [])
     setInventory((invData as InventoryItem[]) ?? [])
@@ -80,11 +80,20 @@ export default function DashboardPage() {
       {/* Stats row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatsCard
+          title="Öppna uppgifter"
+          value={cards.length}
+          subtitle={`${highPriority} hög prioritet`}
+          icon={KanbanSquare}
+          accent={highPriority > 0 ? 'red' : 'blue'}
+          href="/kanban"
+        />
+        <StatsCard
           title="Aktiva leverantörer"
           value={activeSuppliers}
           subtitle={`${suppliers.length} totalt`}
           icon={Package}
           accent="sage"
+          href="/suppliers"
         />
         <StatsCard
           title="Lågt lagersaldo"
@@ -92,13 +101,7 @@ export default function DashboardPage() {
           subtitle="produkter under gräns"
           icon={AlertTriangle}
           accent={lowStockItems.length > 0 ? 'amber' : 'sage'}
-        />
-        <StatsCard
-          title="Öppna uppgifter"
-          value={cards.length}
-          subtitle={`${highPriority} hög prioritet`}
-          icon={KanbanSquare}
-          accent={highPriority > 0 ? 'red' : 'blue'}
+          href="/inventory"
         />
         <StatsCard
           title="Lagervärde"
@@ -106,6 +109,7 @@ export default function DashboardPage() {
           subtitle={`${inventory.length} produkter`}
           icon={TrendingUp}
           accent="bark"
+          href="/inventory"
         />
       </div>
 

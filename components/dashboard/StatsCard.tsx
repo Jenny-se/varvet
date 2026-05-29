@@ -1,4 +1,5 @@
 import { LucideIcon } from 'lucide-react'
+import Link from 'next/link'
 
 interface StatsCardProps {
   title: string
@@ -6,6 +7,7 @@ interface StatsCardProps {
   subtitle?: string
   icon: LucideIcon
   accent?: 'sage' | 'amber' | 'red' | 'blue' | 'bark'
+  href?: string
 }
 
 const accentColors = {
@@ -16,20 +18,33 @@ const accentColors = {
   bark: { bg: 'bg-linen-100', icon: 'text-bark-500', border: 'border-linen-200' },
 }
 
-export function StatsCard({ title, value, subtitle, icon: Icon, accent = 'sage' }: StatsCardProps) {
+export function StatsCard({ title, value, subtitle, icon: Icon, accent = 'sage', href }: StatsCardProps) {
   const colors = accentColors[accent]
+
+  const inner = (
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-xs font-medium text-warm-500 uppercase tracking-wide">{title}</p>
+        <p className="text-2xl font-bold text-warm-900 mt-1.5">{value}</p>
+        {subtitle && <p className="text-xs text-warm-400 mt-1">{subtitle}</p>}
+      </div>
+      <div className={`w-10 h-10 rounded-xl ${colors.bg} flex items-center justify-center flex-shrink-0`}>
+        <Icon className={`w-5 h-5 ${colors.icon}`} />
+      </div>
+    </div>
+  )
+
+  if (href) {
+    return (
+      <Link href={href} className={`card p-5 border ${colors.border} hover:shadow-md transition-shadow duration-150 block`}>
+        {inner}
+      </Link>
+    )
+  }
+
   return (
     <div className={`card p-5 border ${colors.border}`}>
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-medium text-warm-500 uppercase tracking-wide">{title}</p>
-          <p className="text-2xl font-bold text-warm-900 mt-1.5">{value}</p>
-          {subtitle && <p className="text-xs text-warm-400 mt-1">{subtitle}</p>}
-        </div>
-        <div className={`w-10 h-10 rounded-xl ${colors.bg} flex items-center justify-center flex-shrink-0`}>
-          <Icon className={`w-5 h-5 ${colors.icon}`} />
-        </div>
-      </div>
+      {inner}
     </div>
   )
 }
