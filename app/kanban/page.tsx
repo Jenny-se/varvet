@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { DragDropContext, DropResult } from '@hello-pangea/dnd'
 import { supabase } from '@/lib/supabase'
-import { KanbanColumn as KanbanColumnType, KanbanCard as KanbanCardType, Supplier, InventoryItem } from '@/lib/types'
+import { KanbanColumn as KanbanColumnType, KanbanCard as KanbanCardType, Supplier, InventoryItem, Moodboard } from '@/lib/types'
 import { logActivity } from '@/lib/activity'
 import { KanbanColumn } from '@/components/kanban/KanbanColumn'
 import { CardForm } from '@/components/kanban/CardForm'
@@ -25,6 +25,7 @@ export default function KanbanPage() {
   const [cards, setCards] = useState<KanbanCardType[]>([])
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
+  const [moodboards, setMoodboards] = useState<Moodboard[]>([])
   const [loading, setLoading] = useState(true)
 
   const [showCardForm, setShowCardForm] = useState(false)
@@ -38,18 +39,20 @@ export default function KanbanPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true)
-    const [{ data: colData }, { data: cardData }, { data: supData }, { data: invData }] = await Promise.all([
+    const [{ data: colData }, { data: cardData }, { data: supData }, { data: invData }, { data: moodData }] = await Promise.all([
       supabase.from('kanban_columns').select('*').order('position'),
       supabase.from('kanban_cards')
         .select('*, supplier:suppliers(id, company_name), inventory:inventory(id, product_name)')
         .order('position'),
       supabase.from('suppliers').select('id, company_name').eq('status', 'active').order('company_name'),
       supabase.from('inventory').select('id, product_name').order('product_name'),
+      supabase.from('moodboards').select('id, title').order('title'),
     ])
     setColumns(colData ?? [])
     setCards((cardData as KanbanCardType[]) ?? [])
     setSuppliers((supData as Supplier[]) ?? [])
     setInventoryItems((invData as InventoryItem[]) ?? [])
+    setMoodboards((moodData as Moodboard[]) ?? [])
     setLoading(false)
   }, [])
 
@@ -251,6 +254,7 @@ export default function KanbanPage() {
             columns={columns}
             suppliers={suppliers}
             inventoryItems={inventoryItems}
+            moodboards={moodboards}
             initial={editingCard ?? (defaultColumnId ? { column_id: defaultColumnId } : undefined)}
             onSubmit={handleCardSubmit}
             onCancel={() => { setShowCardForm(false); setEditingCard(null) }}

@@ -68,9 +68,35 @@ export interface KanbanCard {
   supplier?: Supplier
   inventory_id: string | null
   inventory?: InventoryItem
+  moodboard_id: string | null
+  moodboard?: Moodboard
   position: number
   created_at: string
   updated_at: string
+}
+
+export type MoodboardItemType = 'image' | 'color' | 'note'
+
+export interface Moodboard {
+  id: string
+  title: string
+  description: string | null
+  tags: string[]
+  created_at: string
+  updated_at: string
+  items?: MoodboardItem[]
+}
+
+export interface MoodboardItem {
+  id: string
+  moodboard_id: string
+  type: MoodboardItemType
+  position: number
+  image_url: string | null
+  color_hex: string | null
+  label: string | null
+  note_text: string | null
+  created_at: string
 }
 
 export interface ActivityEntry {
