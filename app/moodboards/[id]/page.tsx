@@ -24,6 +24,8 @@ export default function MoodboardDetailPage() {
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleVal, setTitleVal] = useState('')
 
+  const [uploadError, setUploadError] = useState<string | null>(null)
+
   // Inline edit for note/color label
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   const [editingVal, setEditingVal] = useState('')
@@ -55,15 +57,18 @@ export default function MoodboardDetailPage() {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
+    setUploadError(null)
 
     const ext = file.name.split('.').pop()
     const path = `${id}/${Date.now()}.${ext}`
 
-    const { error: uploadError } = await supabase.storage
+    const { error: storageError } = await supabase.storage
       .from(BUCKET)
       .upload(path, file, { upsert: false })
 
-    if (!uploadError) {
+    if (storageError) {
+      setUploadError(`Uppladdning misslyckades: ${storageError.message}`)
+    } else {
       const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(path)
       await addItem({ type: 'image', image_url: publicUrl })
     }
@@ -202,6 +207,14 @@ export default function MoodboardDetailPage() {
           </button>
         </div>
       </div>
+
+      {/* Upload error */}
+      {uploadError && (
+        <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 mb-4 text-sm text-red-700">
+          {uploadError}
+          <button onClick={() => setUploadError(null)} className="ml-auto text-red-400 hover:text-red-700">✕</button>
+        </div>
+      )}
 
       {/* Tags */}
       {board.tags.length > 0 && (
