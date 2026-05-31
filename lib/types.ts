@@ -99,6 +99,18 @@ export interface MoodboardItem {
   created_at: string
 }
 
+export interface Document {
+  id: string
+  name: string
+  description: string | null
+  file_url: string
+  file_path: string
+  file_size: number | null
+  file_type: string | null
+  tags: string[]
+  created_at: string
+}
+
 export interface ActivityEntry {
   id: string
   action: string

@@ -8,6 +8,7 @@ import {
   Boxes,
   KanbanSquare,
   ImageIcon,
+  FolderOpen,
   Menu,
   X,
   LogOut,
@@ -23,6 +24,7 @@ const navItems = [
   { href: '/inventory', label: 'Lager', icon: Boxes },
   { href: '/kanban', label: 'Uppgifter', icon: KanbanSquare },
   { href: '/moodboards', label: 'Moodboards', icon: ImageIcon },
+  { href: '/documents', label: 'Dokument', icon: FolderOpen },
 ]
 
 export function Sidebar() {
