@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Supplier, InventoryItem, KanbanCard, ActivityEntry } from '@/lib/types'
+import { Supplier, InventoryItem, KanbanCard, ActivityEntry, Moodboard } from '@/lib/types'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed'
-import { Package, Boxes, KanbanSquare, TrendingUp, AlertTriangle, Calendar } from 'lucide-react'
+import { Package, Boxes, KanbanSquare, TrendingUp, AlertTriangle, Calendar, ImageIcon } from 'lucide-react'
 import { PriorityBadge, CardCategoryBadge } from '@/components/ui/Badge'
 import Link from 'next/link'
 import { format, isPast, isToday } from 'date-fns'
@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [cards, setCards] = useState<KanbanCard[]>([])
   const [activity, setActivity] = useState<ActivityEntry[]>([])
+  const [moodboards, setMoodboards] = useState<Moodboard[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
@@ -25,16 +26,19 @@ export default function DashboardPage() {
       { data: invData },
       { data: cardData },
       { data: actData },
+      { data: moodData },
     ] = await Promise.all([
       supabase.from('suppliers').select('*'),
       supabase.from('inventory').select('*'),
       supabase.from('kanban_cards').select('*, supplier:suppliers(company_name), inventory:inventory(product_name)'),
       supabase.from('activity_feed').select('*').order('created_at', { ascending: false }).limit(5),
+      supabase.from('moodboards').select('id'),
     ])
     setSuppliers(supData ?? [])
     setInventory((invData as InventoryItem[]) ?? [])
     setCards((cardData as KanbanCard[]) ?? [])
     setActivity(actData ?? [])
+    setMoodboards((moodData as Moodboard[]) ?? [])
     setLoading(false)
   }, [])
 
@@ -79,7 +83,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         <StatsCard
           title="Öppna uppgifter"
           value={cards.length}
@@ -111,6 +115,14 @@ export default function DashboardPage() {
           icon={TrendingUp}
           accent="bark"
           href="/inventory"
+        />
+        <StatsCard
+          title="Moodboards"
+          value={moodboards.length}
+          subtitle="inspiration & idéer"
+          icon={ImageIcon}
+          accent="sage"
+          href="/moodboards"
         />
       </div>
 

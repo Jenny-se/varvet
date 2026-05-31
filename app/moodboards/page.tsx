@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, ImageIcon, Trash2, Tag } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { Moodboard } from '@/lib/types'
+import { Moodboard, MoodboardItem } from '@/lib/types'
+import Image from 'next/image'
 import { logActivity } from '@/lib/activity'
 import { Modal } from '@/components/ui/Modal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -28,7 +29,7 @@ export default function MoodboardsPage() {
     setLoading(true)
     const { data } = await supabase
       .from('moodboards')
-      .select('*, items:moodboard_items(id)')
+      .select('*, items:moodboard_items(id, type, image_url, position)')
       .order('created_at', { ascending: false })
     setBoards((data as Moodboard[]) ?? [])
     setLoading(false)
@@ -103,9 +104,16 @@ export default function MoodboardsPage() {
               className="card overflow-hidden hover:shadow-md transition-shadow duration-200 cursor-pointer group"
               onClick={() => router.push(`/moodboards/${board.id}`)}
             >
-              {/* Preview area */}
-              <div className="h-36 bg-gradient-to-br from-cream-200 to-linen-200 flex items-center justify-center">
-                <ImageIcon className="w-10 h-10 text-warm-300" />
+              {/* Cover image */}
+              <div className="h-36 bg-gradient-to-br from-cream-200 to-linen-200 flex items-center justify-center relative overflow-hidden">
+                {(() => {
+                  const cover = (board.items as unknown as MoodboardItem[] | undefined)
+                    ?.filter(i => i.type === 'image' && i.image_url)
+                    .sort((a, b) => a.position - b.position)[0]
+                  return cover?.image_url
+                    ? <Image src={cover.image_url} alt="" fill className="object-cover" sizes="400px" />
+                    : <ImageIcon className="w-10 h-10 text-warm-300" />
+                })()}
               </div>
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
