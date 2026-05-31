@@ -99,7 +99,7 @@ export interface MoodboardItem {
   created_at: string
 }
 
-export interface Document {
+export interface DocumentFile {
   id: string
   name: string
   description: string | null

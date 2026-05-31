@@ -6,7 +6,7 @@ import {
   Trash2, Download, Tag, X
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { Document } from '@/lib/types'
+import { DocumentFile } from '@/lib/types'
 import { logActivity } from '@/lib/activity'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -41,9 +41,9 @@ function fileTypeBadge(type: string | null) {
   return type.split('/')[1]?.toUpperCase() ?? 'Fil'
 }
 
-export default function DocumentsPage() {
+export default function DocumentFilesPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [documents, setDocuments] = useState<Document[]>([])
+  const [documents, setDocumentFiles] = useState<DocumentFile[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -59,17 +59,17 @@ export default function DocumentsPage() {
   const [docTags, setDocTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
 
-  const fetchDocuments = useCallback(async () => {
+  const fetchDocumentFiles = useCallback(async () => {
     setLoading(true)
     const { data } = await supabase
       .from('documents')
       .select('*')
       .order('created_at', { ascending: false })
-    setDocuments(data ?? [])
+    setDocumentFiles(data ?? [])
     setLoading(false)
   }, [])
 
-  useEffect(() => { fetchDocuments() }, [fetchDocuments])
+  useEffect(() => { fetchDocumentFiles() }, [fetchDocumentFiles])
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -121,7 +121,7 @@ export default function DocumentsPage() {
     setDocName('')
     setDocDescription('')
     setDocTags([])
-    fetchDocuments()
+    fetchDocumentFiles()
   }
 
   async function handleDelete() {
@@ -133,7 +133,7 @@ export default function DocumentsPage() {
     await supabase.from('documents').delete().eq('id', deletingId)
     if (doc) await logActivity('Raderade dokument', 'document', deletingId, doc.name)
     setDeletingId(null)
-    fetchDocuments()
+    fetchDocumentFiles()
   }
 
   const filtered = documents.filter(doc => {
