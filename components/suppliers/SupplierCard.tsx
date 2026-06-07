@@ -8,11 +8,12 @@ interface SupplierCardProps {
   supplier: Supplier
   onEdit: () => void
   onDelete: () => void
+  onView: () => void
 }
 
-export function SupplierCard({ supplier, onEdit, onDelete }: SupplierCardProps) {
+export function SupplierCard({ supplier, onEdit, onDelete, onView }: SupplierCardProps) {
   return (
-    <div className="card p-5 hover:shadow-md transition-shadow duration-200">
+    <div className="card p-5 hover:shadow-md transition-shadow duration-200 cursor-pointer" onClick={onView}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -33,13 +34,13 @@ export function SupplierCard({ supplier, onEdit, onDelete }: SupplierCardProps) 
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <button
-            onClick={onEdit}
+            onClick={e => { e.stopPropagation(); onEdit() }}
             className="p-1.5 rounded-lg text-warm-400 hover:text-warm-700 hover:bg-cream-200 transition-colors"
           >
             <Edit2 className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={onDelete}
+            onClick={e => { e.stopPropagation(); onDelete() }}
             className="p-1.5 rounded-lg text-warm-400 hover:text-red-600 hover:bg-red-50 transition-colors"
           >
             <Trash2 className="w-3.5 h-3.5" />

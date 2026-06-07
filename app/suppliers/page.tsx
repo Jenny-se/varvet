@@ -7,6 +7,7 @@ import { Supplier } from '@/lib/types'
 import { logActivity } from '@/lib/activity'
 import { SupplierCard } from '@/components/suppliers/SupplierCard'
 import { SupplierForm } from '@/components/suppliers/SupplierForm'
+import { SupplierDetailModal } from '@/components/suppliers/SupplierDetailModal'
 import { Modal } from '@/components/ui/Modal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -24,6 +25,7 @@ export default function SuppliersPage() {
 
   const [showForm, setShowForm] = useState(false)
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null)
+  const [viewingSupplier, setViewingSupplier] = useState<Supplier | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -179,11 +181,25 @@ export default function SuppliersPage() {
             <SupplierCard
               key={supplier.id}
               supplier={supplier}
+              onView={() => setViewingSupplier(supplier)}
               onEdit={() => { setEditingSupplier(supplier); setShowForm(true) }}
               onDelete={() => setDeletingId(supplier.id)}
             />
           ))}
         </div>
+      )}
+
+      {/* Detail modal */}
+      {viewingSupplier && (
+        <SupplierDetailModal
+          supplier={viewingSupplier}
+          onClose={() => setViewingSupplier(null)}
+          onEdit={() => {
+            setEditingSupplier(viewingSupplier)
+            setViewingSupplier(null)
+            setShowForm(true)
+          }}
+        />
       )}
 
       {/* Form modal */}

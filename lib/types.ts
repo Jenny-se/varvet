@@ -111,6 +111,16 @@ export interface DocumentFile {
   created_at: string
 }
 
+export type SupplierLogType = 'note' | 'call' | 'email' | 'meeting' | 'order'
+
+export interface SupplierLog {
+  id: string
+  supplier_id: string
+  type: SupplierLogType
+  message: string
+  created_at: string
+}
+
 export interface ActivityEntry {
   id: string
   action: string
