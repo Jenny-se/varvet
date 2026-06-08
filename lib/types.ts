@@ -118,6 +118,7 @@ export interface SupplierLog {
   supplier_id: string
   type: SupplierLogType
   message: string
+  log_date: string | null
   created_at: string
 }
 

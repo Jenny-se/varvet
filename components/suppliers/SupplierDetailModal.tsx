@@ -33,6 +33,7 @@ export function SupplierDetailModal({ supplier, onClose, onEdit }: SupplierDetai
   const [loadingLogs, setLoadingLogs] = useState(false)
   const [logType, setLogType] = useState<SupplierLogType>('note')
   const [logMessage, setLogMessage] = useState('')
+  const [logDate, setLogDate] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -56,12 +57,13 @@ export function SupplierDetailModal({ supplier, onClose, onEdit }: SupplierDetai
     setSaving(true)
     const { data } = await supabase
       .from('supplier_logs')
-      .insert({ supplier_id: supplier.id, type: logType, message: logMessage.trim() })
+      .insert({ supplier_id: supplier.id, type: logType, message: logMessage.trim(), log_date: logDate || null })
       .select()
       .single()
     if (data) {
       setLogs(prev => [data, ...prev])
       setLogMessage('')
+      setLogDate('')
     }
     setSaving(false)
   }
@@ -206,13 +208,22 @@ export function SupplierDetailModal({ supplier, onClose, onEdit }: SupplierDetai
                 </button>
               ))}
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-start">
               <textarea
                 className="input-field flex-1 resize-none min-h-[64px] text-sm"
                 placeholder="Skriv en anteckning…"
                 value={logMessage}
                 onChange={e => setLogMessage(e.target.value)}
               />
+              <div className="flex-shrink-0">
+                <label className="label">Datum</label>
+                <input
+                  type="date"
+                  className="input-field text-sm w-36"
+                  value={logDate}
+                  onChange={e => setLogDate(e.target.value)}
+                />
+              </div>
             </div>
             <div className="flex justify-end">
               <button type="submit" disabled={saving || !logMessage.trim()} className="btn-primary flex items-center gap-1.5 disabled:opacity-60">
@@ -248,7 +259,9 @@ export function SupplierDetailModal({ supplier, onClose, onEdit }: SupplierDetai
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-medium text-warm-600">{cfg.label}</span>
                         <span className="text-xs text-warm-400">
-                          {format(new Date(log.created_at), 'd MMM yyyy, HH:mm', { locale: sv })}
+                          {log.log_date
+                            ? format(new Date(log.log_date), 'd MMM yyyy', { locale: sv })
+                            : format(new Date(log.created_at), 'd MMM yyyy', { locale: sv })}
                         </span>
                       </div>
                       <p className="text-sm text-warm-800 leading-relaxed">{log.message}</p>
