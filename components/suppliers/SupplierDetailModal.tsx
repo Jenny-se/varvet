@@ -1,17 +1,27 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Supplier, SupplierLog, SupplierLogType } from '@/lib/types'
+import { useEffect, useState, useRef } from 'react'
+import { Supplier, SupplierLog, SupplierLogType, SupplierFile } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
 import { Modal } from '@/components/ui/Modal'
 import { Badge } from '@/components/ui/Badge'
 import {
   Globe, Mail, Phone, MapPin, Clock, ShoppingBag,
   Edit2, Phone as PhoneIcon, Mail as MailIcon,
-  Coffee, ShoppingCart, FileText, MessageSquare, Plus
+  Coffee, ShoppingCart, FileText, MessageSquare, Plus,
+  Paperclip, Upload, Download, Trash2, File
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
+
+const FILE_BUCKET = 'supplier-files'
+
+function formatBytes(bytes: number | null) {
+  if (!bytes) return ''
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 const LOG_TYPES: { value: SupplierLogType; label: string; icon: React.ElementType; color: string }[] = [
   { value: 'note',    label: 'Anteckning', icon: FileText,      color: 'text-warm-500' },
@@ -28,17 +38,70 @@ interface SupplierDetailModalProps {
 }
 
 export function SupplierDetailModal({ supplier, onClose, onEdit }: SupplierDetailModalProps) {
-  const [tab, setTab] = useState<'info' | 'log'>('info')
+  const [tab, setTab] = useState<'info' | 'log' | 'files'>('info')
   const [logs, setLogs] = useState<SupplierLog[]>([])
   const [loadingLogs, setLoadingLogs] = useState(false)
   const [logType, setLogType] = useState<SupplierLogType>('note')
   const [logMessage, setLogMessage] = useState('')
   const [logDate, setLogDate] = useState('')
   const [saving, setSaving] = useState(false)
+  const [logError, setLogError] = useState<string | null>(null)
+
+  const [files, setFiles] = useState<SupplierFile[]>([])
+  const [loadingFiles, setLoadingFiles] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [fileError, setFileError] = useState<string | null>(null)
+  const [deletingFileId, setDeletingFileId] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (tab === 'log') fetchLogs()
+    if (tab === 'files') fetchFiles()
   }, [tab])
+
+  async function fetchFiles() {
+    setLoadingFiles(true)
+    const { data } = await supabase
+      .from('supplier_files')
+      .select('*')
+      .eq('supplier_id', supplier.id)
+      .order('created_at', { ascending: false })
+    setFiles(data ?? [])
+    setLoadingFiles(false)
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setFileError(null)
+    const path = `${supplier.id}/${Date.now()}_${file.name}`
+    const { error: storageError } = await supabase.storage
+      .from(FILE_BUCKET)
+      .upload(path, file)
+    if (storageError) {
+      setFileError(`Uppladdning misslyckades: ${storageError.message}`)
+    } else {
+      const { data: { publicUrl } } = supabase.storage.from(FILE_BUCKET).getPublicUrl(path)
+      const { data: saved } = await supabase
+        .from('supplier_files')
+        .insert({ supplier_id: supplier.id, name: file.name, file_path: path, file_url: publicUrl, file_size: file.size, file_type: file.type })
+        .select()
+        .single()
+      if (saved) setFiles(prev => [saved, ...prev])
+    }
+    setUploading(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  async function handleDeleteFile(fileId: string) {
+    const f = files.find(f => f.id === fileId)
+    if (!f) return
+    await supabase.storage.from(FILE_BUCKET).remove([f.file_path])
+    await supabase.from('supplier_files').delete().eq('id', fileId)
+    setFiles(prev => prev.filter(f => f.id !== fileId))
+    setDeletingFileId(null)
+  }
 
   async function fetchLogs() {
     setLoadingLogs(true)
@@ -55,12 +118,15 @@ export function SupplierDetailModal({ supplier, onClose, onEdit }: SupplierDetai
     e.preventDefault()
     if (!logMessage.trim()) return
     setSaving(true)
-    const { data } = await supabase
+    setLogError(null)
+    const { data, error } = await supabase
       .from('supplier_logs')
       .insert({ supplier_id: supplier.id, type: logType, message: logMessage.trim(), log_date: logDate || null })
       .select()
       .single()
-    if (data) {
+    if (error) {
+      setLogError(`Kunde inte spara: ${error.message}`)
+    } else if (data) {
       setLogs(prev => [data, ...prev])
       setLogMessage('')
       setLogDate('')
@@ -75,7 +141,7 @@ export function SupplierDetailModal({ supplier, onClose, onEdit }: SupplierDetai
       {/* Tabs + Edit button */}
       <div className="flex items-center justify-between px-6 pt-2 pb-0 border-b border-cream-300">
         <div className="flex gap-1">
-          {(['info', 'log'] as const).map(t => (
+          {([['info', 'Information'], ['log', 'Logg'], ['files', 'Filer']] as const).map(([t, label]) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -85,7 +151,7 @@ export function SupplierDetailModal({ supplier, onClose, onEdit }: SupplierDetai
                   : 'border-transparent text-warm-500 hover:text-warm-800'
               }`}
             >
-              {t === 'info' ? 'Information' : 'Logg'}
+              {label}
             </button>
           ))}
         </div>
@@ -225,6 +291,9 @@ export function SupplierDetailModal({ supplier, onClose, onEdit }: SupplierDetai
                 />
               </div>
             </div>
+            {logError && (
+              <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{logError}</p>
+            )}
             <div className="flex justify-end">
               <button type="submit" disabled={saving || !logMessage.trim()} className="btn-primary flex items-center gap-1.5 disabled:opacity-60">
                 <Plus className="w-3.5 h-3.5" />
@@ -269,6 +338,79 @@ export function SupplierDetailModal({ supplier, onClose, onEdit }: SupplierDetai
                   </div>
                 )
               })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* FILES TAB */}
+      {tab === 'files' && (
+        <div className="px-6 py-5 space-y-4">
+          {/* Upload button */}
+          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileUpload} />
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-warm-600">{files.length} {files.length === 1 ? 'fil' : 'filer'}</p>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="btn-primary flex items-center gap-2 disabled:opacity-60"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              {uploading ? 'Laddar upp…' : 'Ladda upp fil'}
+            </button>
+          </div>
+
+          {fileError && (
+            <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{fileError}</p>
+          )}
+
+          {loadingFiles ? (
+            <div className="space-y-2">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-12 bg-cream-200 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : files.length === 0 ? (
+            <div className="text-center py-8">
+              <Paperclip className="w-8 h-8 text-warm-300 mx-auto mb-2" />
+              <p className="text-sm text-warm-400">Inga filer uppladdade</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {files.map(f => (
+                <div key={f.id} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-cream-300 group">
+                  <div className="w-8 h-8 rounded-lg bg-cream-200 flex items-center justify-center flex-shrink-0">
+                    <File className="w-4 h-4 text-warm-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-warm-800 truncate">{f.name}</p>
+                    <p className="text-xs text-warm-400">
+                      {formatBytes(f.file_size)}{f.file_size ? ' · ' : ''}{format(new Date(f.created_at), 'd MMM yyyy', { locale: sv })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <a
+                      href={f.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      download={f.name}
+                      className="p-1.5 rounded-lg text-warm-400 hover:text-sage-600 hover:bg-sage-50 transition-colors"
+                      title="Ladda ner"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </a>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Radera "${f.name}"?`)) handleDeleteFile(f.id)
+                      }}
+                      className="p-1.5 rounded-lg text-warm-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      title="Radera"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

@@ -111,6 +111,17 @@ export interface DocumentFile {
   created_at: string
 }
 
+export interface SupplierFile {
+  id: string
+  supplier_id: string
+  name: string
+  file_path: string
+  file_url: string
+  file_size: number | null
+  file_type: string | null
+  created_at: string
+}
+
 export type SupplierLogType = 'note' | 'call' | 'email' | 'meeting' | 'order'
 
 export interface SupplierLog {
