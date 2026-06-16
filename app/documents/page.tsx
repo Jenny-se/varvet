@@ -86,8 +86,14 @@ export default function DocumentFilesPage() {
     setUploading(true)
     setUploadError(null)
 
-    const ext = pendingFile.name.split('.').pop()
-    const path = `${Date.now()}-${pendingFile.name}`
+    const safeName = pendingFile.name
+      .split('').map(c => {
+        if (c === ' ') return '_'
+        if (c.charCodeAt(0) > 127) return '_'
+        if (!/[a-zA-Z0-9._-]/.test(c)) return '_'
+        return c
+      }).join('')
+    const path = `${Date.now()}_${safeName}`
 
     const { error: storageError } = await supabase.storage
       .from(BUCKET)

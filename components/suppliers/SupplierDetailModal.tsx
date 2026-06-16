@@ -75,7 +75,14 @@ export function SupplierDetailModal({ supplier, onClose, onEdit }: SupplierDetai
     if (!file) return
     setUploading(true)
     setFileError(null)
-    const path = `${supplier.id}/${Date.now()}_${file.name}`
+    const safeName = file.name
+      .split('').map(c => {
+        if (c === ' ') return '_'
+        if (c.charCodeAt(0) > 127) return '_'
+        if (!/[a-zA-Z0-9._-]/.test(c)) return '_'
+        return c
+      }).join('')
+    const path = `${supplier.id}/${Date.now()}_${safeName}`
     const { error: storageError } = await supabase.storage
       .from(FILE_BUCKET)
       .upload(path, file)
