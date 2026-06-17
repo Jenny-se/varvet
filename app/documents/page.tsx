@@ -6,6 +6,7 @@ import {
   Trash2, Download, Tag, X
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { downloadSigned } from '@/lib/storage'
 import { DocumentFile } from '@/lib/types'
 import { logActivity } from '@/lib/activity'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -105,12 +106,10 @@ export default function DocumentFilesPage() {
       return
     }
 
-    const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(path)
-
     const { data, error: dbError } = await supabase.from('documents').insert({
       name: docName.trim() || pendingFile.name,
       description: docDescription.trim() || null,
-      file_url: publicUrl,
+      file_url: path,
       file_path: path,
       file_size: pendingFile.size,
       file_type: pendingFile.type,
@@ -308,16 +307,13 @@ export default function DocumentFilesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                <a
-                  href={doc.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download
+                <button
+                  onClick={() => downloadSigned(BUCKET, doc.file_path, doc.name)}
                   className="p-2 rounded-lg text-warm-400 hover:text-sage-600 hover:bg-sage-100 transition-colors"
                   title="Ladda ner"
                 >
                   <Download className="w-4 h-4" />
-                </a>
+                </button>
                 <button
                   onClick={() => setDeletingId(doc.id)}
                   className="p-2 rounded-lg text-warm-400 hover:text-red-600 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
