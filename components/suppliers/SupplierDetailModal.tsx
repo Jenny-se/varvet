@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { Supplier, SupplierLog, SupplierLogType, SupplierFile } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
+import { downloadSigned } from '@/lib/storage'
 import { Modal } from '@/components/ui/Modal'
 import { Badge } from '@/components/ui/Badge'
 import {
@@ -89,10 +90,9 @@ export function SupplierDetailModal({ supplier, onClose, onEdit }: SupplierDetai
     if (storageError) {
       setFileError(`Uppladdning misslyckades: ${storageError.message}`)
     } else {
-      const { data: { publicUrl } } = supabase.storage.from(FILE_BUCKET).getPublicUrl(path)
       const { data: saved } = await supabase
         .from('supplier_files')
-        .insert({ supplier_id: supplier.id, name: file.name, file_path: path, file_url: publicUrl, file_size: file.size, file_type: file.type })
+        .insert({ supplier_id: supplier.id, name: file.name, file_path: path, file_url: path, file_size: file.size, file_type: file.type })
         .select()
         .single()
       if (saved) setFiles(prev => [saved, ...prev])
@@ -396,16 +396,13 @@ export function SupplierDetailModal({ supplier, onClose, onEdit }: SupplierDetai
                     </p>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <a
-                      href={f.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download={f.name}
+                    <button
+                      onClick={() => downloadSigned(FILE_BUCKET, f.file_path, f.name)}
                       className="p-1.5 rounded-lg text-warm-400 hover:text-sage-600 hover:bg-sage-50 transition-colors"
                       title="Ladda ner"
                     >
                       <Download className="w-3.5 h-3.5" />
-                    </a>
+                    </button>
                     <button
                       onClick={() => {
                         if (confirm(`Radera "${f.name}"?`)) handleDeleteFile(f.id)

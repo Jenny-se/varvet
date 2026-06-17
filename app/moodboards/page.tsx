@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Plus, ImageIcon, Trash2, Tag } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Moodboard, MoodboardItem } from '@/lib/types'
+import { signedUrls } from '@/lib/storage'
 import Image from 'next/image'
 import { logActivity } from '@/lib/activity'
 import { Modal } from '@/components/ui/Modal'
@@ -16,6 +17,7 @@ import { sv } from 'date-fns/locale'
 export default function MoodboardsPage() {
   const router = useRouter()
   const [boards, setBoards] = useState<Moodboard[]>([])
+  const [coverUrls, setCoverUrls] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -31,7 +33,20 @@ export default function MoodboardsPage() {
       .from('moodboards')
       .select('*, items:moodboard_items(id, type, image_url, position)')
       .order('created_at', { ascending: false })
-    setBoards((data as Moodboard[]) ?? [])
+    const boards = (data as Moodboard[]) ?? []
+    setBoards(boards)
+
+    // Generate signed URLs for cover images
+    const coverItems = boards.flatMap(b => {
+      const cover = (b.items as unknown as MoodboardItem[] | undefined)
+        ?.filter(i => i.type === 'image' && i.image_url)
+        .sort((a, b) => a.position - b.position)[0]
+      return cover ? [{ id: b.id, pathOrUrl: cover.image_url! }] : []
+    })
+    if (coverItems.length > 0) {
+      const urls = await signedUrls('moodboard-images', coverItems)
+      setCoverUrls(urls)
+    }
     setLoading(false)
   }, [])
 
@@ -106,14 +121,9 @@ export default function MoodboardsPage() {
             >
               {/* Cover image */}
               <div className="h-36 bg-gradient-to-br from-cream-200 to-linen-200 flex items-center justify-center relative overflow-hidden">
-                {(() => {
-                  const cover = (board.items as unknown as MoodboardItem[] | undefined)
-                    ?.filter(i => i.type === 'image' && i.image_url)
-                    .sort((a, b) => a.position - b.position)[0]
-                  return cover?.image_url
-                    ? <Image src={cover.image_url} alt="" fill className="object-cover" sizes="400px" />
-                    : <ImageIcon className="w-10 h-10 text-warm-300" />
-                })()}
+                {coverUrls[board.id]
+                  ? <Image src={coverUrls[board.id]} alt="" fill className="object-cover" sizes="400px" />
+                  : <ImageIcon className="w-10 h-10 text-warm-300" />}
               </div>
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">

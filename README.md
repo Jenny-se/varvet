@@ -59,6 +59,22 @@ The workflow at `.github/workflows/build.yml` runs `npm run build` on every push
 | Section | Description |
 |---|---|
 | **Översikt** | Dashboard with stats, low-stock alerts, upcoming due dates, activity feed |
-| **Leverantörer** | Manage yarn suppliers — search, filter by country/fiber, fiber badges, certifications |
+| **Leverantörer** | Manage yarn suppliers — search, filter by country/fiber, fiber badges, certifications, contact log, file attachments |
 | **Lager** | Manage inventory — low-stock warning badges, weight/supplier filters, margin calculation |
 | **Uppgifter** | Drag-and-drop Kanban board — custom columns, card priorities, category tags, linked suppliers/inventory |
+| **Moodboards** | Visual inspiration boards — drag-and-drop image, colour, and note items |
+
+## Storage
+
+Files (supplier attachments) and moodboard images are stored in **private** Supabase Storage buckets:
+
+- `supplier-files` — documents attached to supplier records
+- `moodboard-images` — images uploaded to moodboards
+
+Access is granted via **signed URLs** (1-hour expiry), generated on demand in `lib/storage.ts`. Buckets must be set to **Private** in the Supabase dashboard (Storage → bucket settings) for this to be effective — public buckets expose files regardless of signed URL usage.
+
+### Supabase Storage setup
+
+1. In the Supabase dashboard, go to **Storage** and create two buckets: `supplier-files` and `moodboard-images`
+2. Set both buckets to **Private**
+3. Add a storage policy allowing authenticated users to upload and download from each bucket

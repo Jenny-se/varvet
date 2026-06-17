@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import { supabase } from '@/lib/supabase'
 import { Moodboard, MoodboardItem } from '@/lib/types'
+import { signedUrl, signedUrls } from '@/lib/storage'
 import { ArrowLeft, ImagePlus, Palette, StickyNote, Trash2, GripVertical, Pencil, Check, X } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import Image from 'next/image'
@@ -18,6 +19,7 @@ export default function MoodboardDetailPage() {
 
   const [board, setBoard] = useState<Moodboard | null>(null)
   const [items, setItems] = useState<MoodboardItem[]>([])
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -46,7 +48,17 @@ export default function MoodboardDetailPage() {
 
     setBoard(boardData ?? null)
     setTitleVal(boardData?.title ?? '')
-    setItems(itemData ?? [])
+    const loadedItems: MoodboardItem[] = itemData ?? []
+    setItems(loadedItems)
+
+    // Generate signed URLs for all image items
+    const imageItems = loadedItems
+      .filter(i => i.type === 'image' && i.image_url)
+      .map(i => ({ id: i.id, pathOrUrl: i.image_url! }))
+    if (imageItems.length > 0) {
+      const urls = await signedUrls(BUCKET, imageItems)
+      setImageUrls(urls)
+    }
     setLoading(false)
   }, [id])
 
@@ -69,8 +81,16 @@ export default function MoodboardDetailPage() {
     if (storageError) {
       setUploadError(`Uppladdning misslyckades: ${storageError.message}`)
     } else {
-      const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(path)
-      await addItem({ type: 'image', image_url: publicUrl })
+      const { data: saved } = await supabase
+        .from('moodboard_items')
+        .insert({ moodboard_id: id, position: items.length, type: 'image', image_url: path })
+        .select()
+        .single()
+      if (saved) {
+        const url = await signedUrl(BUCKET, path)
+        setItems(prev => [...prev, saved])
+        if (url) setImageUrls(prev => ({ ...prev, [saved.id]: url }))
+      }
     }
     setUploading(false)
     if (fileInputRef.current) fileInputRef.current.value = ''
@@ -272,8 +292,8 @@ export default function MoodboardDetailPage() {
                       </button>
 
                       {/* IMAGE */}
-                      {item.type === 'image' && item.image_url && (
-                        <Image src={item.image_url} alt="" fill className="object-cover" sizes="256px" />
+                      {item.type === 'image' && imageUrls[item.id] && (
+                        <Image src={imageUrls[item.id]} alt="" fill className="object-cover" sizes="256px" />
                       )}
 
                       {/* COLOR */}
