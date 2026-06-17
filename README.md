@@ -63,6 +63,7 @@ The workflow at `.github/workflows/build.yml` runs `npm run build` on every push
 | **Lager** | Manage inventory — low-stock warning badges, weight/supplier filters, margin calculation |
 | **Uppgifter** | Drag-and-drop Kanban board — custom columns, card priorities, category tags, linked suppliers/inventory |
 | **Moodboards** | Visual inspiration boards — drag-and-drop image, colour, and note items |
+| **Utgifter** | Expense tracker — log amounts, categories, supplier links, paid status, monthly bar chart |
 
 ## Storage
 

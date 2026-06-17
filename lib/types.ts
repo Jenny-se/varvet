@@ -133,6 +133,17 @@ export interface SupplierLog {
   created_at: string
 }
 
+export interface Expense {
+  id: string
+  amount: number
+  description: string | null
+  category: string
+  supplier_id: string | null
+  paid: boolean
+  date: string
+  created_at: string
+}
+
 export interface ActivityEntry {
   id: string
   action: string
