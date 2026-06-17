@@ -170,7 +170,7 @@ export default function ExpensesPage() {
             <YAxis tick={{ fontSize: 12, fill: '#9c8f85' }} axisLine={false} tickLine={false} width={60}
               tickFormatter={v => v.toLocaleString('sv-SE')} />
             <Tooltip
-              formatter={(v: number) => [formatAmount(v), 'Summa']}
+              formatter={(v) => [formatAmount(Number(v)), 'Summa']}
               contentStyle={{ borderRadius: 8, border: '1px solid #e8e0d8', fontSize: 12 }}
             />
             <Bar dataKey="total" fill="#8aab94" radius={[4, 4, 0, 0]} />
