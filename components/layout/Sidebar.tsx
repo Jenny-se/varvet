@@ -41,7 +41,7 @@ export function Sidebar() {
     <>
       {/* Logo / Brand */}
       <div className="px-6 py-6 border-b border-linen-200">
-        <div className="flex items-center gap-2.5">
+        <Link href="/dashboard" className="flex items-center gap-2.5">
           <Image
             src="/varvet_logo.JPG"
             alt="Varvet"
@@ -53,7 +53,7 @@ export function Sidebar() {
             <h1 className="text-base font-semibold text-warm-900 tracking-tight">Varvet</h1>
             <p className="text-xs text-warm-500">Studio CRM</p>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Navigation */}
@@ -112,7 +112,7 @@ export function Sidebar() {
 
       {/* Mobile top bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-linen-200 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2">
           <Image
             src="/varvet_logo.JPG"
             alt="Varvet"
@@ -121,7 +121,7 @@ export function Sidebar() {
             className="rounded-md"
           />
           <span className="font-semibold text-warm-900 text-sm">Varvet</span>
-        </div>
+        </Link>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           className="p-1.5 rounded-lg text-warm-600 hover:bg-cream-200 transition-colors"
