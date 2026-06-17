@@ -40,6 +40,7 @@ export function ActivityFeed({ entries }: ActivityFeedProps) {
                 )}
               </p>
               <p className="text-xs text-warm-400 mt-0.5">
+                {entry.user_email && <span>{entry.user_email.split('@')[0]} · </span>}
                 {formatDistanceToNow(new Date(entry.created_at), { addSuffix: true, locale: sv })}
               </p>
             </div>

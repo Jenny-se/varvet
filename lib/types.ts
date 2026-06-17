@@ -139,6 +139,7 @@ export interface ActivityEntry {
   entity_type: string
   entity_id: string | null
   entity_name: string | null
+  user_email: string | null
   created_at: string
 }
 

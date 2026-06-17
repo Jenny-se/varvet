@@ -79,7 +79,7 @@ export default function DashboardPage() {
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
       {/* Welcome */}
       <div className="mb-8">
-        <h1 className="text-xl font-semibold text-warm-900">Välkommen till Varvet</h1>
+        <h1 className="text-xl font-semibold text-warm-900">Översikt</h1>
       </div>
 
       {/* Stats row */}
