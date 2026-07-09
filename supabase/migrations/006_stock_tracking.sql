@@ -17,4 +17,4 @@ create policy "Authenticated users can read stock snapshots"
   on stock_snapshots for select to authenticated using (true);
 
 create policy "Service role can insert stock snapshots"
-  on stock_snapshots for insert to authenticated using (true) with check (true);
+  on stock_snapshots for insert to authenticated with check (true);
