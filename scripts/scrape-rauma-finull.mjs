@@ -26,15 +26,34 @@ async function scrapePage(pageUrl) {
 
   const records = []
 
-  // Find all links matching /p/[product-slug]-[color-slug]-[number]/
+  // Find all links matching /p/[product-slug]-[color-...]/
   $(`a[href*="/p/${productSlug}-"]`).each((_, el) => {
     const href = $(el).attr('href') ?? ''
 
-    const urlMatch = href.match(new RegExp(`/p/${productSlug}-(.+?)-(\\d+)/?$`))
-    if (!urlMatch) return
+    // Strip product slug prefix and trailing slash to get the color segment
+    // e.g. /p/rauma-finull-hvit-400/ → "hvit-400"
+    // e.g. /p/rauma-fivel-214-koksgra/ → "214-koksgra"
+    const colorSegment = href.replace(`/p/${productSlug}-`, '').replace(/\/$/, '')
+    if (!colorSegment || colorSegment.includes('/')) return
 
-    const colorSlug = urlMatch[1]
-    const colorNumber = urlMatch[2]
+    let colorNumber, colorSlug
+
+    // Number-last pattern: e.g. "hvit-400", "lys-gra-403"
+    const endMatch = colorSegment.match(/^(.+)-(\d+)$/)
+    // Number-first pattern: e.g. "214-koksgra", "10-hvit"
+    const startMatch = colorSegment.match(/^(\d+[a-z]*)-(.+)$/)
+
+    if (endMatch && !/^\d/.test(endMatch[1])) {
+      // Finull style — name first, number last
+      colorSlug = endMatch[1]
+      colorNumber = endMatch[2]
+    } else if (startMatch) {
+      // Fivel/Lamull style — number first, name last
+      colorNumber = startMatch[1]
+      colorSlug = startMatch[2]
+    } else {
+      return
+    }
 
     const linkText = $(el).text().trim()
     const colorName = linkText.replace(/^\d+\s*/, '').trim() || colorSlug.replace(/-/g, ' ')
