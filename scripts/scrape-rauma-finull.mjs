@@ -19,33 +19,49 @@ async function scrape() {
 
   const records = []
 
-  // Find all elements whose text matches "[number] i lager"
-  $('*').each((_, el) => {
-    const text = $(el).children().length === 0 ? $(el).text().trim() : null
-    if (!text) return
-    const match = text.match(/^(\d+)\s+i\s+lager$/i)
-    if (!match) return
+  // Strategy: find all links matching the color URL pattern /p/rauma-finull-[name]-[number]/
+  // Then search for "i lager" text within the same container.
+  $('a[href*="/p/rauma-finull-"]').each((_, el) => {
+    const href = $(el).attr('href') ?? ''
 
-    const quantity = parseInt(match[1], 10)
+    // Extract color number (last numeric segment) and slug from URL
+    // e.g. /p/rauma-finull-lys-gra-403/ → number: 403, slug: lys-gra
+    const urlMatch = href.match(/\/p\/rauma-finull-(.+?)-(\d+)\/?$/)
+    if (!urlMatch) return
 
-    // Walk up to find the closest container with a link or image for color info
-    const container = $(el).closest('li, article, div[class]')
-    const link = container.find('a').first()
-    const img = container.find('img').first()
+    const colorNumber = urlMatch[1]  // e.g. "lys-gra"
+    const colorNumberId = urlMatch[2] // e.g. "403"
 
-    // Try to extract color number and name from link text or image alt
-    let colorName = link.text().trim() || img.attr('alt') || ''
-    let colorNumber = null
+    // Get display name: prefer link text, fall back to slug
+    const linkText = $(el).text().trim()
+    // Link text might be "403 Lys grå" or just "Lys grå" — clean it up
+    const colorName = linkText.replace(/^\d+\s*/, '').trim() || colorNumber.replace(/-/g, ' ')
 
-    // Color entries often look like "400 Hvit" or alt "Rauma Finull | 400 Hvit"
-    const altText = img.attr('alt') ?? ''
-    const nameMatch = altText.match(/\|\s*(\d+)\s+(.+)$/) ?? colorName.match(/^(\d+)\s+(.+)$/)
-    if (nameMatch) {
-      colorNumber = nameMatch[1]
-      colorName = nameMatch[2].trim()
+    // Search for "i lager" in the link itself, then its parent containers
+    let quantity = null
+    const searchTargets = [$(el), $(el).parent(), $(el).parent().parent(), $(el).closest('li, article')]
+    for (const $target of searchTargets) {
+      $target.find('*').addBack().each((_, child) => {
+        if (quantity !== null) return
+        if ($(child).children().length > 0) return
+        const text = $(child).text().trim()
+        const stockMatch = text.match(/^(\d+)\s+i\s+lager$/i)
+        if (stockMatch) quantity = parseInt(stockMatch[1], 10)
+      })
+      if (quantity !== null) break
     }
 
-    records.push({ color_name: colorName || null, color_number: colorNumber, quantity })
+    // Also try regex on the container's full text as fallback
+    if (quantity === null) {
+      const containerText = $(el).closest('li, article, div').text()
+      const fallback = containerText.match(/(\d+)\s+i\s+lager/i)
+      if (fallback) quantity = parseInt(fallback[1], 10)
+    }
+
+    if (quantity === null) return // skip if no stock info found
+
+    console.log(`  ${colorNumberId} ${colorName}: ${quantity} i lager`)
+    records.push({ color_name: colorName, color_number: colorNumberId, quantity })
   })
 
   if (records.length === 0) {
@@ -54,19 +70,14 @@ async function scrape() {
   }
 
   const snapshotDate = new Date().toISOString().split('T')[0]
-  console.log(`Found ${records.length} colors. Inserting for ${snapshotDate}...`)
+  console.log(`\nFound ${records.length} colors. Inserting for ${snapshotDate}...`)
 
-  // Check if we already scraped today to avoid duplicates
-  const { count } = await supabase
+  // Delete today's existing records before re-inserting (allows re-runs)
+  await supabase
     .from('stock_snapshots')
-    .select('id', { count: 'exact', head: true })
+    .delete()
     .eq('snapshot_date', snapshotDate)
     .eq('product_url', PAGE_URL)
-
-  if (count && count > 0) {
-    console.log(`Already scraped today (${count} records). Skipping.`)
-    return
-  }
 
   const { error } = await supabase.from('stock_snapshots').insert(
     records.map(r => ({
