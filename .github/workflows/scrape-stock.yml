@@ -1,4 +1,4 @@
-name: Scrape Rauma Finull Stock
+name: Scrape Rauma Stock
 
 on:
   schedule:
