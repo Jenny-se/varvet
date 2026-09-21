@@ -23,8 +23,7 @@ export default function ReceiptsPage() {
     const { data } = await supabase
       .from('receipts')
       .select('*, items:receipt_items(*)')
-      .order('receipt_date', { ascending: false })
-      .order('created_at', { ascending: false })
+      .order('receipt_number', { ascending: false })
     setReceipts(data ?? [])
     setLoading(false)
   }
