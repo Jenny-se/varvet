@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import type { Receipt } from '@/lib/types'
-import { Plus, FileText, Eye, Trash2 } from 'lucide-react'
+import { Plus, FileText, Eye, Trash2, Pencil } from 'lucide-react'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
 
@@ -108,6 +108,13 @@ export default function ReceiptsPage() {
                       >
                         <Eye className="w-3.5 h-3.5" />
                         Visa
+                      </Link>
+                      <Link
+                        href={`/receipts/${r.id}/edit`}
+                        className="p-1 text-warm-300 hover:text-warm-700 transition-colors rounded"
+                        title="Ändra kvitto"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
                       </Link>
                       <button
                         onClick={() => handleDelete(r)}
