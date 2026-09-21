@@ -37,6 +37,7 @@ In the Supabase SQL Editor, run each migration in order:
 | `supabase/migrations/004_activity_user.sql` | Add user_email to activity feed |
 | `supabase/migrations/005_expenses.sql` | Expense tracker |
 | `supabase/migrations/006_stock_tracking.sql` | Competitor stock snapshots |
+| `supabase/migrations/007_receipts.sql` | Receipt system: receipt_products, receipts, receipt_items tables + next_receipt_number() function |
 
 ### 3. Configure environment
 
@@ -66,6 +67,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | **Moodboards** | Visual inspiration boards — drag-and-drop image, colour, and note items |
 | **Dokument** | General document library — upload PDFs, images, spreadsheets with tags and descriptions |
 | **Utgifter** | Expense tracker — log amounts, categories (Hyra/Garn/Accessoarer/Representation/custom), supplier link, paid status, monthly bar chart |
+| **Kvitton** | Receipt creator — select products from pricelist or free text, auto-fills price and VAT rate, printable receipt layout matching Varvet brand |
+| **Admin** | Product pricelist — manage products with default price and VAT rate (25%/6%/12%/0%) for use in receipts |
 
 ## Storage
 

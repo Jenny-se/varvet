@@ -10,6 +10,8 @@ import {
   ImageIcon,
   FolderOpen,
   Receipt,
+  FileText,
+  Settings,
   Menu,
   X,
   LogOut,
@@ -27,6 +29,8 @@ const navItems = [
   { href: '/moodboards', label: 'Moodboards', icon: ImageIcon },
   { href: '/documents', label: 'Dokument', icon: FolderOpen },
   { href: '/expenses', label: 'Utgifter', icon: Receipt },
+  { href: '/receipts', label: 'Kvitton', icon: FileText },
+  { href: '/admin', label: 'Admin', icon: Settings },
 ]
 
 export function Sidebar() {

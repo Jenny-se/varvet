@@ -144,6 +144,43 @@ export interface Expense {
   created_at: string
 }
 
+export type PaymentMethod = 'swish' | 'kontant' | 'kort' | 'faktura'
+
+export interface ReceiptProduct {
+  id: string
+  name: string
+  default_price: number
+  vat_rate: number
+  active: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface ReceiptItem {
+  id: string
+  receipt_id: string
+  product_name: string
+  receipt_product_id: string | null
+  quantity: number
+  unit_price: number
+  vat_rate: number
+  sort_order: number
+  created_at: string
+}
+
+export interface Receipt {
+  id: string
+  receipt_number: string
+  receipt_date: string
+  customer_name: string | null
+  payment_method: PaymentMethod
+  notes: string | null
+  created_at: string
+  updated_at: string
+  items?: ReceiptItem[]
+}
+
 export interface ActivityEntry {
   id: string
   action: string

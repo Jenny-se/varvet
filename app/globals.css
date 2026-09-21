@@ -54,6 +54,39 @@
   }
 }
 
+/* ============================================================
+   Print styles — used by the receipt view page
+   ============================================================ */
+@media print {
+  /* Hide sidebar, toolbar, and any no-print element */
+  aside,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Full-width main area */
+  body,
+  html {
+    background: white !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Remove main padding/margin so receipt fills the page */
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  /* Receipt page gets clean white background */
+  .receipt-page {
+    max-width: 100% !important;
+    padding: 20mm 20mm !important;
+  }
+}
+
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
