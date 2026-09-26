@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { ReceiptProduct } from '@/lib/types'
 import { Plus, Pencil, Trash2, Check, X, Search } from 'lucide-react'
@@ -16,6 +16,14 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
   const [showInactive, setShowInactive] = useState(true)
+
+  const visibleProducts = useMemo(() =>
+    products.filter(p => {
+      if (!showInactive && !p.active) return false
+      if (search.trim()) return p.name.toLowerCase().includes(search.trim().toLowerCase())
+      return true
+    })
+  , [products, search, showInactive])
 
   async function load() {
     const { data } = await supabase
@@ -164,15 +172,9 @@ export default function AdminPage() {
           <div className="p-8 text-center text-sm text-warm-400">
             Inga produkter ännu. Lägg till din första produkt ovan.
           </div>
-        ) : (() => {
-          const visible = products.filter(p => {
-            if (!showInactive && !p.active) return false
-            if (search.trim()) return p.name.toLowerCase().includes(search.trim().toLowerCase())
-            return true
-          })
-          return visible.length === 0 ? (
-            <div className="p-8 text-center text-sm text-warm-400">Inga produkter matchar sökningen.</div>
-          ) : (
+        ) : visibleProducts.length === 0 ? (
+          <div className="p-8 text-center text-sm text-warm-400">Inga produkter matchar sökningen.</div>
+        ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-linen-100">
@@ -184,7 +186,7 @@ export default function AdminPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-linen-100">
-              {visible.map(p => (
+              {visibleProducts.map(p => (
                 <tr key={p.id} className={`hover:bg-cream-50 transition-colors ${!p.active ? 'opacity-50' : ''}`}>
                   {editingId === p.id ? (
                     <>
@@ -279,8 +281,7 @@ export default function AdminPage() {
               ))}
             </tbody>
           </table>
-          )
-        })()}
+        )}
       </div>
     </div>
   )
