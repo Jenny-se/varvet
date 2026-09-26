@@ -144,7 +144,7 @@ export interface Expense {
   created_at: string
 }
 
-export type PaymentMethod = 'swish' | 'kontant' | 'kort' | 'faktura'
+export type PaymentMethod = 'swish' | 'bg' | 'kort' | 'faktura'
 
 export interface ReceiptProduct {
   id: string
@@ -175,7 +175,9 @@ export interface Receipt {
   receipt_date: string
   customer_name: string | null
   payment_method: PaymentMethod
+  paid: boolean
   notes: string | null
+  email_to: string | null
   created_at: string
   updated_at: string
   items?: ReceiptItem[]

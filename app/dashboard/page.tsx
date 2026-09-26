@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Supplier, InventoryItem, KanbanCard, ActivityEntry, Moodboard } from '@/lib/types'
+import { Supplier, InventoryItem, KanbanCard, ActivityEntry, Moodboard, Receipt } from '@/lib/types'
 import { StatsCard } from '@/components/dashboard/StatsCard'
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed'
-import { Package, Boxes, KanbanSquare, TrendingUp, AlertTriangle, Calendar, ImageIcon } from 'lucide-react'
+import { Package, Boxes, KanbanSquare, TrendingUp, AlertTriangle, Calendar, ImageIcon, FileText, AlertCircle } from 'lucide-react'
 import { PriorityBadge, CardCategoryBadge } from '@/components/ui/Badge'
 import Link from 'next/link'
 import { format, isPast, isToday } from 'date-fns'
@@ -17,6 +17,8 @@ export default function DashboardPage() {
   const [cards, setCards] = useState<KanbanCard[]>([])
   const [activity, setActivity] = useState<ActivityEntry[]>([])
   const [moodboards, setMoodboards] = useState<Moodboard[]>([])
+  const [recentReceipts, setRecentReceipts] = useState<Receipt[]>([])
+  const [receiptCount, setReceiptCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
@@ -27,23 +29,30 @@ export default function DashboardPage() {
       { data: cardData },
       { data: actData },
       { data: moodData },
+      { data: receiptData },
+      { count: rCount },
     ] = await Promise.all([
       supabase.from('suppliers').select('*'),
       supabase.from('inventory').select('*'),
       supabase.from('kanban_cards').select('*, supplier:suppliers(company_name), inventory:inventory(product_name)'),
       supabase.from('activity_feed').select('*').order('created_at', { ascending: false }).limit(5),
       supabase.from('moodboards').select('id'),
+      supabase.from('receipts').select('*, items:receipt_items(*)').order('receipt_number', { ascending: false }).limit(5),
+      supabase.from('receipts').select('id', { count: 'exact', head: true }),
     ])
     setSuppliers(supData ?? [])
     setInventory((invData as InventoryItem[]) ?? [])
     setCards((cardData as KanbanCard[]) ?? [])
     setActivity(actData ?? [])
     setMoodboards((moodData as Moodboard[]) ?? [])
+    setRecentReceipts((receiptData as Receipt[]) ?? [])
+    setReceiptCount(rCount ?? 0)
     setLoading(false)
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
 
+  const unpaidReceipts = recentReceipts.filter(r => !r.paid).length
   const activeSuppliers = suppliers.filter(s => s.status === 'active').length
   const lowStockItems = inventory.filter(i => i.quantity_in_stock <= i.low_stock_threshold)
   const totalInventoryValue = inventory.reduce((sum, i) => sum + (i.retail_price ?? 0) * i.quantity_in_stock, 0)
@@ -123,6 +132,14 @@ export default function DashboardPage() {
           icon={ImageIcon}
           accent="sage"
           href="/moodboards"
+        />
+        <StatsCard
+          title="Kvitton"
+          value={receiptCount}
+          subtitle={unpaidReceipts > 0 ? `${unpaidReceipts} obetalda` : 'alla betalda'}
+          icon={FileText}
+          accent={unpaidReceipts > 0 ? 'amber' : 'sage'}
+          href="/receipts"
         />
       </div>
 
@@ -218,13 +235,60 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right: Activity feed */}
-        <div className="card p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Boxes className="w-4 h-4 text-bark-500" />
-            <h2 className="text-sm font-semibold text-warm-900">Senaste aktivitet</h2>
+        {/* Right: Receipts + Activity */}
+        <div className="space-y-6">
+          {/* Recent receipts */}
+          <div className="card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-sage-500" />
+                <h2 className="text-sm font-semibold text-warm-900">Senaste kvitton</h2>
+              </div>
+              <Link href="/receipts" className="text-xs text-sage-600 hover:underline">Visa alla</Link>
+            </div>
+            {recentReceipts.length === 0 ? (
+              <p className="text-sm text-warm-400 py-4 text-center">Inga kvitton än</p>
+            ) : (
+              <div className="space-y-1">
+                {recentReceipts.map(r => {
+                  const total = (r.items ?? []).reduce((s, it) => s + it.quantity * it.unit_price, 0)
+                  return (
+                    <Link
+                      key={r.id}
+                      href={`/receipts/${r.id}`}
+                      className="flex items-center justify-between py-2 border-b border-cream-300 last:border-0 hover:bg-cream-200 rounded-lg px-2 -mx-2 transition-colors"
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        {!r.paid && <AlertCircle className="w-3 h-3 text-orange-400 flex-shrink-0" />}
+                        <span className="text-xs font-mono text-warm-700">{r.receipt_number}</span>
+                        {r.customer_name && (
+                          <span className="text-xs text-warm-400 truncate">{r.customer_name}</span>
+                        )}
+                      </div>
+                      <span className="text-xs font-medium text-warm-800 flex-shrink-0 ml-2">
+                        {Math.round(total).toLocaleString('sv-SE')}:-
+                      </span>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
+            <Link
+              href="/receipts/new"
+              className="mt-3 flex items-center justify-center gap-1.5 text-xs text-sage-600 hover:text-sage-800 py-2 border border-dashed border-sage-300 rounded-lg hover:border-sage-400 transition-colors"
+            >
+              + Nytt kvitto
+            </Link>
           </div>
-          <ActivityFeed entries={activity} />
+
+          {/* Activity feed */}
+          <div className="card p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Boxes className="w-4 h-4 text-bark-500" />
+              <h2 className="text-sm font-semibold text-warm-900">Senaste aktivitet</h2>
+            </div>
+            <ActivityFeed entries={activity} />
+          </div>
         </div>
       </div>
     </div>

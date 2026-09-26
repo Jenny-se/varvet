@@ -26,7 +26,7 @@ function buildEmailHtml(receipt: {
   items: { product_name: string; quantity: number; unit_price: number; vat_rate: number }[]
 }) {
   const PAYMENT_LABELS: Record<string, string> = {
-    swish: 'Swish', kontant: 'Kontant', kort: 'Kort', faktura: 'Faktura',
+    swish: 'Swish', bg: 'BG', kort: 'Kort', faktura: 'Faktura',
   }
 
   const total = receipt.items.reduce((s, it) => s + it.quantity * it.unit_price, 0)

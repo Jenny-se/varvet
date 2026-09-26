@@ -177,6 +177,9 @@ export default function NewReceiptPage() {
   const [customerName, setCustomerName] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('swish')
   const [notes, setNotes] = useState('')
+  const [paid, setPaid] = useState(true)
+  const [sendEmail, setSendEmail] = useState(false)
+  const [emailTo, setEmailTo] = useState('')
   const [items, setItems] = useState<LineItem[]>([newItem()])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -243,7 +246,9 @@ export default function NewReceiptPage() {
         receipt_date: date,
         customer_name: customerName.trim() || null,
         payment_method: paymentMethod,
+        paid,
         notes: notes.trim() || null,
+        email_to: sendEmail && emailTo.trim() ? emailTo.trim() : null,
       })
       .select()
       .single()
@@ -318,10 +323,20 @@ export default function NewReceiptPage() {
                 className="w-full px-3 py-2 text-sm border border-linen-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-300"
               >
                 <option value="swish">Swish</option>
-                <option value="kontant">Kontant</option>
+                <option value="bg">BG</option>
                 <option value="kort">Kort</option>
                 <option value="faktura">Faktura</option>
               </select>
+            </div>
+            <div className="col-span-3 flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="paid"
+                checked={paid}
+                onChange={e => setPaid(e.target.checked)}
+                className="w-4 h-4 accent-sage-600"
+              />
+              <label htmlFor="paid" className="text-sm text-warm-700 cursor-pointer">Betalt</label>
             </div>
             <div className="col-span-3">
               <label className="block text-xs text-warm-500 mb-1">Kund (frivilligt)</label>
@@ -441,15 +456,38 @@ export default function NewReceiptPage() {
           )}
         </div>
 
-        {/* Notes */}
-        <div className="bg-white rounded-xl border border-linen-200 p-5">
-          <label className="block text-xs text-warm-500 mb-1">Anteckning (syns ej på kvittot)</label>
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            rows={2}
-            className="w-full px-3 py-2 text-sm border border-linen-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-300 resize-none"
-          />
+        {/* Notes + email */}
+        <div className="bg-white rounded-xl border border-linen-200 p-5 space-y-4">
+          <div>
+            <label className="block text-xs text-warm-500 mb-1">Anteckning (syns ej på kvittot)</label>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 text-sm border border-linen-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-300 resize-none"
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="sendEmail"
+                checked={sendEmail}
+                onChange={e => setSendEmail(e.target.checked)}
+                className="w-4 h-4 accent-sage-600"
+              />
+              <label htmlFor="sendEmail" className="text-sm text-warm-700 cursor-pointer">Skicka e-post</label>
+            </div>
+            {sendEmail && (
+              <input
+                type="email"
+                value={emailTo}
+                onChange={e => setEmailTo(e.target.value)}
+                placeholder="kund@exempel.se"
+                className="w-full px-3 py-2 text-sm border border-linen-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-300"
+              />
+            )}
+          </div>
         </div>
 
         {error && (

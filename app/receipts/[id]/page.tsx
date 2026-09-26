@@ -12,7 +12,7 @@ import { sv } from 'date-fns/locale'
 
 const PAYMENT_LABELS: Record<string, string> = {
   swish: 'swish',
-  kontant: 'kontant',
+  bg: 'bankgiro',
   kort: 'kort',
   faktura: 'faktura',
 }
@@ -71,6 +71,7 @@ export default function ReceiptPage() {
         .single()
       if (data) {
         data.items = [...(data.items ?? [])].sort((a, b) => a.sort_order - b.sort_order)
+        if (data.email_to) setEmailTo(data.email_to)
       }
       setReceipt(data)
       setLoading(false)

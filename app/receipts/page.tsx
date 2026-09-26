@@ -1,16 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import type { Receipt } from '@/lib/types'
-import { Plus, FileText, Eye, Trash2, Pencil } from 'lucide-react'
+import { Plus, FileText, Eye, Trash2, Pencil, AlertCircle, Mail } from 'lucide-react'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
 
 const PAYMENT_LABELS: Record<string, string> = {
   swish: 'Swish',
-  kontant: 'Kontant',
+  bg: 'BG',
   kort: 'Kort',
   faktura: 'Faktura',
 }
@@ -18,6 +18,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 export default function ReceiptsPage() {
   const [receipts, setReceipts] = useState<Receipt[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedMonth, setSelectedMonth] = useState('')
 
   async function load() {
     const { data } = await supabase
@@ -30,6 +31,23 @@ export default function ReceiptsPage() {
 
   useEffect(() => { load() }, [])
 
+  const months = useMemo(() => {
+    const seen = new Set<string>()
+    const result: { value: string; label: string }[] = []
+    for (const r of receipts) {
+      const m = r.receipt_date.slice(0, 7)
+      if (!seen.has(m)) {
+        seen.add(m)
+        result.push({ value: m, label: format(new Date(r.receipt_date + 'T12:00:00'), 'MMMM yyyy', { locale: sv }) })
+      }
+    }
+    return result
+  }, [receipts])
+
+  const filtered = useMemo(() =>
+    selectedMonth ? receipts.filter(r => r.receipt_date.startsWith(selectedMonth)) : receipts
+  , [receipts, selectedMonth])
+
   async function handleDelete(r: Receipt) {
     if (!confirm(`Ta bort kvitto ${r.receipt_number}?`)) return
     await supabase.from('receipts').delete().eq('id', r.id)
@@ -41,8 +59,7 @@ export default function ReceiptsPage() {
   }
 
   function formatSEK(amount: number) {
-    const rounded = Math.round(amount)
-    return `${rounded.toLocaleString('sv-SE')}:-`
+    return `${Math.round(amount).toLocaleString('sv-SE')}:-`
   }
 
   return (
@@ -50,15 +67,29 @@ export default function ReceiptsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold text-warm-900">Kvitton</h1>
-          <p className="text-sm text-warm-500 mt-0.5">{receipts.length} kvitton totalt</p>
+          <p className="text-sm text-warm-500 mt-0.5">
+            {selectedMonth ? `${filtered.length} av ` : ''}{receipts.length} kvitton totalt
+          </p>
         </div>
-        <Link
-          href="/receipts/new"
-          className="flex items-center gap-2 px-4 py-2 bg-sage-600 text-white text-sm font-medium rounded-lg hover:bg-sage-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Nytt kvitto
-        </Link>
+        <div className="flex items-center gap-3">
+          <select
+            value={selectedMonth}
+            onChange={e => setSelectedMonth(e.target.value)}
+            className="px-3 py-2 text-sm border border-linen-200 rounded-lg bg-white text-warm-700 focus:outline-none focus:ring-2 focus:ring-sage-300"
+          >
+            <option value="">Alla månader</option>
+            {months.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+          <Link
+            href="/receipts/new"
+            className="flex items-center gap-2 px-4 py-2 bg-sage-600 text-white text-sm font-medium rounded-lg hover:bg-sage-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Nytt kvitto
+          </Link>
+        </div>
       </div>
 
       {loading ? (
@@ -71,6 +102,8 @@ export default function ReceiptsPage() {
             Skapa ditt första kvitto
           </Link>
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 text-warm-400 text-sm">Inga kvitton för vald månad.</div>
       ) : (
         <div className="bg-white rounded-xl border border-linen-200 overflow-hidden">
           <table className="w-full text-sm">
@@ -79,21 +112,31 @@ export default function ReceiptsPage() {
                 <th className="text-left px-5 py-3 text-xs font-medium text-warm-500">Nummer</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-warm-500">Datum</th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-warm-500">Kund</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-warm-500">Betalt</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-warm-500">Betalsätt</th>
                 <th className="text-right px-4 py-3 text-xs font-medium text-warm-500">Summa</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-linen-100">
-              {receipts.map(r => (
+              {filtered.map(r => (
                 <tr key={r.id} className="hover:bg-cream-50 transition-colors">
-                  <td className="px-5 py-3 font-mono font-medium text-warm-900">{r.receipt_number}</td>
+                  <td className="px-5 py-3 font-mono font-medium text-warm-900">
+                    <div className="flex items-center gap-1.5">
+                      {!r.paid && (
+                        <AlertCircle className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" title="Ej betalt" />
+                      )}
+                      {r.email_to && (
+                        <Mail className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" title={`Skicka e-post till ${r.email_to}`} />
+                      )}
+                      {r.receipt_number}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-warm-700">
-                    {format(new Date(r.receipt_date), 'd MMM yyyy', { locale: sv })}
+                    {format(new Date(r.receipt_date + 'T12:00:00'), 'd MMM yyyy', { locale: sv })}
                   </td>
                   <td className="px-4 py-3 text-warm-700">{r.customer_name ?? '—'}</td>
                   <td className="px-4 py-3">
-                    <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-linen-100 text-warm-600 capitalize">
+                    <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-linen-100 text-warm-600">
                       {PAYMENT_LABELS[r.payment_method] ?? r.payment_method}
                     </span>
                   </td>
@@ -104,14 +147,14 @@ export default function ReceiptsPage() {
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/receipts/${r.id}`}
-                        className="flex items-center gap-1 text-sage-600 hover:text-sage-800 text-xs font-medium"
+                        className="p-1 text-sage-600 hover:text-sage-800 transition-colors rounded"
+                        title="Visa kvitto"
                       >
                         <Eye className="w-3.5 h-3.5" />
-                        Visa
                       </Link>
                       <Link
                         href={`/receipts/${r.id}/edit`}
-                        className="p-1 text-warm-300 hover:text-warm-700 transition-colors rounded"
+                        className="p-1 text-warm-500 hover:text-warm-800 transition-colors rounded"
                         title="Ändra kvitto"
                       >
                         <Pencil className="w-3.5 h-3.5" />

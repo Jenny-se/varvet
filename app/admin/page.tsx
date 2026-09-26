@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { ReceiptProduct } from '@/lib/types'
-import { Plus, Pencil, Trash2, Check, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, X, Search } from 'lucide-react'
 
 const EMPTY_FORM = { name: '', default_price: '', vat_rate: '25' }
 
@@ -14,6 +14,8 @@ export default function AdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
+  const [search, setSearch] = useState('')
+  const [showInactive, setShowInactive] = useState(true)
 
   async function load() {
     const { data } = await supabase
@@ -133,8 +135,27 @@ export default function AdminPage() {
 
       {/* Product list */}
       <div className="bg-white rounded-xl border border-linen-200 overflow-hidden">
-        <div className="px-5 py-3 border-b border-linen-100">
+        <div className="px-5 py-3 border-b border-linen-100 flex items-center gap-3">
           <h2 className="text-sm font-semibold text-warm-700">Produkter</h2>
+          <span className="text-xs text-warm-400">{products.length} st</span>
+          <div className="flex-1 relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-warm-300 pointer-events-none" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Sök produkt…"
+              className="w-full pl-8 pr-3 py-1.5 text-sm border border-linen-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-300"
+            />
+          </div>
+          <label className="flex items-center gap-1.5 text-xs text-warm-500 cursor-pointer whitespace-nowrap">
+            <input
+              type="checkbox"
+              checked={showInactive}
+              onChange={e => setShowInactive(e.target.checked)}
+              className="accent-sage-600"
+            />
+            Visa inaktiva
+          </label>
         </div>
 
         {loading ? (
@@ -143,7 +164,15 @@ export default function AdminPage() {
           <div className="p-8 text-center text-sm text-warm-400">
             Inga produkter ännu. Lägg till din första produkt ovan.
           </div>
-        ) : (
+        ) : (() => {
+          const visible = products.filter(p => {
+            if (!showInactive && !p.active) return false
+            if (search.trim()) return p.name.toLowerCase().includes(search.trim().toLowerCase())
+            return true
+          })
+          return visible.length === 0 ? (
+            <div className="p-8 text-center text-sm text-warm-400">Inga produkter matchar sökningen.</div>
+          ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-linen-100">
@@ -155,7 +184,7 @@ export default function AdminPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-linen-100">
-              {products.map(p => (
+              {visible.map(p => (
                 <tr key={p.id} className={`hover:bg-cream-50 transition-colors ${!p.active ? 'opacity-50' : ''}`}>
                   {editingId === p.id ? (
                     <>
@@ -250,7 +279,8 @@ export default function AdminPage() {
               ))}
             </tbody>
           </table>
-        )}
+          )
+        })()}
       </div>
     </div>
   )
