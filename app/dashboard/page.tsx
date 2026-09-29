@@ -1,296 +1,35 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
-import { Supplier, InventoryItem, KanbanCard, ActivityEntry, Moodboard, Receipt } from '@/lib/types'
-import { StatsCard } from '@/components/dashboard/StatsCard'
-import { ActivityFeed } from '@/components/dashboard/ActivityFeed'
-import { Package, Boxes, KanbanSquare, TrendingUp, AlertTriangle, Calendar, ImageIcon, FileText, AlertCircle } from 'lucide-react'
-import { PriorityBadge, CardCategoryBadge } from '@/components/ui/Badge'
 import Link from 'next/link'
-import { format, isPast, isToday } from 'date-fns'
-import { sv } from 'date-fns/locale'
+import Image from 'next/image'
+import { FileText, Plus } from 'lucide-react'
 
 export default function DashboardPage() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([])
-  const [inventory, setInventory] = useState<InventoryItem[]>([])
-  const [cards, setCards] = useState<KanbanCard[]>([])
-  const [activity, setActivity] = useState<ActivityEntry[]>([])
-  const [moodboards, setMoodboards] = useState<Moodboard[]>([])
-  const [recentReceipts, setRecentReceipts] = useState<Receipt[]>([])
-  const [receiptCount, setReceiptCount] = useState(0)
-  const [loading, setLoading] = useState(true)
-
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    const [
-      { data: supData },
-      { data: invData },
-      { data: cardData },
-      { data: actData },
-      { data: moodData },
-      { data: receiptData },
-      { count: rCount },
-    ] = await Promise.all([
-      supabase.from('suppliers').select('*'),
-      supabase.from('inventory').select('*'),
-      supabase.from('kanban_cards').select('*, supplier:suppliers(company_name), inventory:inventory(product_name)'),
-      supabase.from('activity_feed').select('*').order('created_at', { ascending: false }).limit(5),
-      supabase.from('moodboards').select('id'),
-      supabase.from('receipts').select('*, items:receipt_items(*)').order('receipt_number', { ascending: false }).limit(5),
-      supabase.from('receipts').select('id', { count: 'exact', head: true }),
-    ])
-    setSuppliers(supData ?? [])
-    setInventory((invData as InventoryItem[]) ?? [])
-    setCards((cardData as KanbanCard[]) ?? [])
-    setActivity(actData ?? [])
-    setMoodboards((moodData as Moodboard[]) ?? [])
-    setRecentReceipts((receiptData as Receipt[]) ?? [])
-    setReceiptCount(rCount ?? 0)
-    setLoading(false)
-  }, [])
-
-  useEffect(() => { fetchData() }, [fetchData])
-
-  const unpaidReceipts = recentReceipts.filter(r => !r.paid).length
-  const activeSuppliers = suppliers.filter(s => s.status === 'active').length
-  const lowStockItems = inventory.filter(i => i.quantity_in_stock <= i.low_stock_threshold)
-  const totalInventoryValue = inventory.reduce((sum, i) => sum + (i.retail_price ?? 0) * i.quantity_in_stock, 0)
-
-  const openCards = cards.filter(c => true) // all open tasks shown
-  const highPriority = openCards.filter(c => c.priority === 'high').length
-  const mediumPriority = openCards.filter(c => c.priority === 'medium').length
-  const lowPriority = openCards.filter(c => c.priority === 'low').length
-
-  const upcoming = cards
-    .filter(c => c.due_date)
-    .filter(c => {
-      const d = new Date(c.due_date!)
-      return !isPast(d) || isToday(d)
-    })
-    .sort((a, b) => new Date(a.due_date!).getTime() - new Date(b.due_date!).getTime())
-    .slice(0, 5)
-
-  if (loading) {
-    return (
-      <div className="p-6 md:p-8 max-w-7xl mx-auto">
-        <div className="h-7 bg-cream-300 rounded w-48 mb-6 animate-pulse" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="card p-5 h-24 animate-pulse bg-cream-200" />
-          ))}
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      {/* Welcome */}
-      <div className="mb-8">
-        <h1 className="text-xl font-semibold text-warm-900">Översikt</h1>
-      </div>
+    <div className="min-h-screen flex flex-col items-center justify-center gap-6 p-8 bg-cream-100">
+      <Image
+        src="/varvet_logo.JPG"
+        alt="Varvet Garn"
+        width={120}
+        height={120}
+        className="object-contain mb-4"
+      />
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-        <StatsCard
-          title="Öppna uppgifter"
-          value={cards.length}
-          subtitle={`${highPriority} hög prioritet`}
-          icon={KanbanSquare}
-          accent={highPriority > 0 ? 'red' : 'blue'}
-          href="/kanban"
-        />
-        <StatsCard
-          title="Aktiva leverantörer"
-          value={activeSuppliers}
-          subtitle={`${suppliers.length} totalt`}
-          icon={Package}
-          accent="sage"
-          href="/suppliers"
-        />
-        <StatsCard
-          title="Lågt lagersaldo"
-          value={lowStockItems.length}
-          subtitle="produkter under gräns"
-          icon={AlertTriangle}
-          accent={lowStockItems.length > 0 ? 'amber' : 'sage'}
-          href="/inventory"
-        />
-        <StatsCard
-          title="Lagervärde"
-          value={`${totalInventoryValue.toLocaleString('sv-SE')} kr`}
-          subtitle={`${inventory.length} produkter`}
-          icon={TrendingUp}
-          accent="bark"
-          href="/inventory"
-        />
-        <StatsCard
-          title="Moodboards"
-          value={moodboards.length}
-          subtitle="inspiration & idéer"
-          icon={ImageIcon}
-          accent="sage"
-          href="/moodboards"
-        />
-        <StatsCard
-          title="Kvitton"
-          value={receiptCount}
-          subtitle={unpaidReceipts > 0 ? `${unpaidReceipts} obetalda` : 'alla betalda'}
-          icon={FileText}
-          accent={unpaidReceipts > 0 ? 'amber' : 'sage'}
-          href="/receipts"
-        />
-      </div>
+      <Link
+        href="/receipts/new"
+        className="flex items-center justify-center gap-3 w-full max-w-xs py-5 bg-sage-600 text-white text-lg font-semibold rounded-2xl hover:bg-sage-700 active:scale-95 transition-all shadow-md"
+      >
+        <Plus className="w-6 h-6" />
+        Nytt kvitto
+      </Link>
 
-      {/* Main grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Low stock + Upcoming */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Low stock warning */}
-          {lowStockItems.length > 0 && (
-            <div className="card p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle className="w-4 h-4 text-amber-500" />
-                <h2 className="text-sm font-semibold text-warm-900">Lågt lagersaldo</h2>
-              </div>
-              <div className="space-y-2">
-                {lowStockItems.slice(0, 6).map(item => (
-                  <div key={item.id} className="flex items-center justify-between py-2 border-b border-cream-300 last:border-0">
-                    <div>
-                      <p className="text-sm font-medium text-warm-800">{item.product_name}</p>
-                      {item.colorway && <p className="text-xs text-warm-500">{item.colorway}</p>}
-                    </div>
-                    <div className="text-right">
-                      <span className={`text-sm font-semibold ${item.quantity_in_stock === 0 ? 'text-red-600' : 'text-amber-600'}`}>
-                        {item.quantity_in_stock}
-                      </span>
-                      <span className="text-xs text-warm-400"> / {item.low_stock_threshold}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Upcoming due dates */}
-          <div className="card p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-4 h-4 text-sage-500" />
-              <h2 className="text-sm font-semibold text-warm-900">Kommande förfallodatum</h2>
-            </div>
-            {upcoming.length === 0 ? (
-              <p className="text-sm text-warm-400 py-4 text-center">Inga kommande förfallodatum</p>
-            ) : (
-              <div className="space-y-2">
-                {upcoming.map(card => {
-                  const d = new Date(card.due_date!)
-                  const isOverdue = isPast(d) && !isToday(d)
-                  const todayDue = isToday(d)
-                  return (
-                    <Link
-                      key={card.id}
-                      href="/kanban"
-                      className="flex items-center justify-between py-2 border-b border-cream-300 last:border-0 hover:bg-cream-200 rounded-lg px-2 -mx-2 transition-colors"
-                    >
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <PriorityBadge priority={card.priority} />
-                        <p className="text-sm text-warm-800 truncate">{card.title}</p>
-                        {card.category_tag && <CardCategoryBadge category={card.category_tag} />}
-                      </div>
-                      <span className={`text-xs flex-shrink-0 ml-3 font-medium ${
-                        isOverdue ? 'text-red-600' : todayDue ? 'text-amber-600' : 'text-warm-500'
-                      }`}>
-                        {todayDue ? 'Idag' : isOverdue ? 'Försenad' : format(d, 'd MMM', { locale: sv })}
-                      </span>
-                    </Link>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Task priority breakdown */}
-          <div className="card p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <KanbanSquare className="w-4 h-4 text-blue-500" />
-              <h2 className="text-sm font-semibold text-warm-900">Uppgifter per prioritet</h2>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: 'Hög', count: highPriority, color: 'bg-red-100 text-red-700 hover:bg-red-200', priority: 'high' },
-                { label: 'Medel', count: mediumPriority, color: 'bg-amber-100 text-amber-700 hover:bg-amber-200', priority: 'medium' },
-                { label: 'Låg', count: lowPriority, color: 'bg-sage-100 text-sage-700 hover:bg-sage-200', priority: 'low' },
-              ].map(({ label, count, color, priority }) => (
-                <Link
-                  key={label}
-                  href={`/kanban?priority=${priority}`}
-                  className={`rounded-xl p-4 ${color} text-center transition-colors block`}
-                >
-                  <p className="text-2xl font-bold">{count}</p>
-                  <p className="text-xs font-medium mt-1">{label}</p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Receipts + Activity */}
-        <div className="space-y-6">
-          {/* Recent receipts */}
-          <div className="card p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-sage-500" />
-                <h2 className="text-sm font-semibold text-warm-900">Senaste kvitton</h2>
-              </div>
-              <Link href="/receipts" className="text-xs text-sage-600 hover:underline">Visa alla</Link>
-            </div>
-            {recentReceipts.length === 0 ? (
-              <p className="text-sm text-warm-400 py-4 text-center">Inga kvitton än</p>
-            ) : (
-              <div className="space-y-1">
-                {recentReceipts.map(r => {
-                  const total = (r.items ?? []).reduce((s, it) => s + it.quantity * it.unit_price, 0)
-                  return (
-                    <Link
-                      key={r.id}
-                      href={`/receipts/${r.id}`}
-                      className="flex items-center justify-between py-2 border-b border-cream-300 last:border-0 hover:bg-cream-200 rounded-lg px-2 -mx-2 transition-colors"
-                    >
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        {!r.paid && <AlertCircle className="w-3 h-3 text-orange-400 flex-shrink-0" />}
-                        <span className="text-xs font-mono text-warm-700">{r.receipt_number}</span>
-                        {r.customer_name && (
-                          <span className="text-xs text-warm-400 truncate">{r.customer_name}</span>
-                        )}
-                      </div>
-                      <span className="text-xs font-medium text-warm-800 flex-shrink-0 ml-2">
-                        {Math.round(total).toLocaleString('sv-SE')}:-
-                      </span>
-                    </Link>
-                  )
-                })}
-              </div>
-            )}
-            <Link
-              href="/receipts/new"
-              className="mt-3 flex items-center justify-center gap-1.5 text-xs text-sage-600 hover:text-sage-800 py-2 border border-dashed border-sage-300 rounded-lg hover:border-sage-400 transition-colors"
-            >
-              + Nytt kvitto
-            </Link>
-          </div>
-
-          {/* Activity feed */}
-          <div className="card p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Boxes className="w-4 h-4 text-bark-500" />
-              <h2 className="text-sm font-semibold text-warm-900">Senaste aktivitet</h2>
-            </div>
-            <ActivityFeed entries={activity} />
-          </div>
-        </div>
-      </div>
+      <Link
+        href="/receipts"
+        className="flex items-center justify-center gap-3 w-full max-w-xs py-5 bg-white text-warm-800 text-lg font-semibold rounded-2xl hover:bg-cream-200 active:scale-95 transition-all shadow-sm border border-linen-200"
+      >
+        <FileText className="w-6 h-6" />
+        Alla kvitton
+      </Link>
     </div>
   )
 }
