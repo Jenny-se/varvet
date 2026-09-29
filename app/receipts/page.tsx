@@ -123,10 +123,10 @@ export default function ReceiptsPage() {
                   <td className="px-5 py-3 font-mono font-medium text-warm-900">
                     <div className="flex items-center gap-1.5">
                       {!r.paid && (
-                        <AlertCircle className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" title="Ej betalt" />
+                        <AlertCircle className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" aria-label="Ej betalt" />
                       )}
                       {r.email_to && (
-                        <Mail className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" title={`Skicka e-post till ${r.email_to}`} />
+                        <Mail className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" aria-label={`Skicka e-post till ${r.email_to}`} />
                       )}
                       {r.receipt_number}
                     </div>
