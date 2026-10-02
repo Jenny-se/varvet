@@ -35,6 +35,7 @@ export function InventoryForm({ initial, suppliers, onSubmit, onCancel, submitti
     retail_price: initial?.retail_price ?? null,
     supplier_id: initial?.supplier_id ?? null,
     low_stock_threshold: initial?.low_stock_threshold ?? 5,
+    active: initial?.active ?? true,
     category: initial?.category ?? 'yarn',
     tags: initial?.tags ?? [],
     notes: initial?.notes ?? '',
