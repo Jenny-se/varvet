@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { FileText, Plus } from 'lucide-react'
+import { FileText, Plus, Boxes } from 'lucide-react'
 
 export default function DashboardPage() {
   return (
@@ -29,6 +29,14 @@ export default function DashboardPage() {
       >
         <FileText className="w-6 h-6" />
         Alla kvitton
+      </Link>
+
+      <Link
+        href="/inventory"
+        className="flex items-center justify-center gap-3 w-full max-w-xs py-5 bg-white text-warm-800 text-lg font-semibold rounded-2xl hover:bg-cream-200 active:scale-95 transition-all shadow-sm border border-linen-200"
+      >
+        <Boxes className="w-6 h-6" />
+        Lager
       </Link>
     </div>
   )

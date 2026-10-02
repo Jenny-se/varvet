@@ -26,6 +26,7 @@ export default function InventoryPage() {
   const [filterCategory, setFilterCategory] = useState<InventoryCategory | 'all'>('all')
   const [filterSupplier, setFilterSupplier] = useState('')
   const [showLowOnly, setShowLowOnly] = useState(false)
+  const [showInactive, setShowInactive] = useState(false)
 
   const [showForm, setShowForm] = useState(false)
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null)
@@ -49,9 +50,13 @@ export default function InventoryPage() {
   useEffect(() => { fetchData() }, [fetchData])
 
   const lowStockCount = items.filter(i => i.quantity_in_stock <= i.low_stock_threshold).length
-  const totalValue = items.reduce((sum, i) => sum + (i.retail_price ?? 0) * i.quantity_in_stock, 0)
+  const totalUnits = items.reduce((sum, i) => sum + i.quantity_in_stock, 0)
+  const totalRetail = items.reduce((sum, i) => sum + (i.retail_price ?? 0) * i.quantity_in_stock, 0)
+  const totalCost = items.reduce((sum, i) => sum + (i.cost_price ?? 0) * i.quantity_in_stock, 0)
+  const totalValue = totalRetail
 
   const filtered = items.filter(item => {
+    if (!showInactive && !item.active) return false
     if (search && !item.product_name.toLowerCase().includes(search.toLowerCase()) &&
         !(item.colorway?.toLowerCase().includes(search.toLowerCase())) &&
         !(item.fiber_content?.toLowerCase().includes(search.toLowerCase()))) return false
@@ -77,6 +82,11 @@ export default function InventoryPage() {
     fetchData()
   }
 
+  async function handleToggleActive(item: InventoryItem) {
+    await supabase.from('inventory').update({ active: !item.active }).eq('id', item.id)
+    fetchData()
+  }
+
   async function handleDelete() {
     if (!deletingId) return
     const item = items.find(i => i.id === deletingId)
@@ -89,13 +99,8 @@ export default function InventoryPage() {
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-warm-900">Lager</h1>
-          <p className="text-sm text-warm-500 mt-0.5">
-            {items.length} produkter · {totalValue.toLocaleString('sv-SE')} kr totalt värde
-          </p>
-        </div>
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="text-xl font-semibold text-warm-900">Lager</h1>
         <button
           onClick={() => { setEditingItem(null); setShowForm(true) }}
           className="btn-primary flex items-center gap-2"
@@ -103,6 +108,30 @@ export default function InventoryPage() {
           <Plus className="w-4 h-4" />
           Lägg till
         </button>
+      </div>
+
+      {/* Value stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        <div className="bg-white border border-linen-200 rounded-xl p-4">
+          <p className="text-xs text-warm-400 mb-1">Artiklar (st)</p>
+          <p className="text-2xl font-semibold text-warm-900 tabular-nums">{totalUnits.toLocaleString('sv-SE')}</p>
+          <p className="text-xs text-warm-400 mt-0.5">{items.length} produkter</p>
+        </div>
+        <div className="bg-white border border-linen-200 rounded-xl p-4">
+          <p className="text-xs text-warm-400 mb-1">Försäljningsvärde</p>
+          <p className="text-2xl font-semibold text-warm-900 tabular-nums">{Math.round(totalRetail).toLocaleString('sv-SE')} <span className="text-base font-normal text-warm-500">kr</span></p>
+          <p className="text-xs text-warm-400 mt-0.5">ink. moms</p>
+        </div>
+        <div className="bg-white border border-linen-200 rounded-xl p-4">
+          <p className="text-xs text-warm-400 mb-1">Inköpsvärde</p>
+          <p className="text-2xl font-semibold text-warm-900 tabular-nums">{Math.round(totalCost).toLocaleString('sv-SE')} <span className="text-base font-normal text-warm-500">kr</span></p>
+          <p className="text-xs text-warm-400 mt-0.5">{totalCost > 0 ? `${items.filter(i => i.cost_price).length} med kostnadspris` : 'saknas för de flesta'}</p>
+        </div>
+        <div className={`border rounded-xl p-4 ${lowStockCount > 0 ? 'bg-amber-50 border-amber-200' : 'bg-white border-linen-200'}`}>
+          <p className="text-xs text-warm-400 mb-1">Lågt saldo</p>
+          <p className={`text-2xl font-semibold tabular-nums ${lowStockCount > 0 ? 'text-amber-700' : 'text-sage-600'}`}>{lowStockCount}</p>
+          <p className="text-xs text-warm-400 mt-0.5">{lowStockCount > 0 ? 'behöver beställas' : 'allt ok'}</p>
+        </div>
       </div>
 
       {/* Low stock banner */}
@@ -159,6 +188,15 @@ export default function InventoryPage() {
             <option value="">Alla leverantörer</option>
             {suppliers.map(s => <option key={s.id} value={s.id}>{s.company_name}</option>)}
           </select>
+          <label className="flex items-center gap-1.5 text-sm text-warm-500 cursor-pointer whitespace-nowrap self-center">
+            <input
+              type="checkbox"
+              checked={showInactive}
+              onChange={e => setShowInactive(e.target.checked)}
+              className="accent-sage-600"
+            />
+            Visa inaktiva
+          </label>
         </div>
       </div>
 
@@ -196,6 +234,7 @@ export default function InventoryPage() {
               item={item}
               onEdit={() => { setEditingItem(item); setShowForm(true) }}
               onDelete={() => setDeletingId(item.id)}
+              onToggleActive={() => handleToggleActive(item)}
             />
           ))}
         </div>

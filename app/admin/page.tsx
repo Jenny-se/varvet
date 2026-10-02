@@ -39,12 +39,12 @@ export default function AdminPage() {
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.name.trim() || !form.default_price) return
+    if (!form.name.trim()) return
     setSaving(true)
     const maxOrder = products.length > 0 ? Math.max(...products.map(p => p.sort_order)) + 1 : 0
     await supabase.from('receipt_products').insert({
       name: form.name.trim(),
-      default_price: parseFloat(form.default_price),
+      default_price: form.default_price ? parseFloat(form.default_price) : 0,
       vat_rate: parseFloat(form.vat_rate),
       sort_order: maxOrder,
     })
@@ -115,7 +115,6 @@ export default function AdminPage() {
               onChange={e => setForm(f => ({ ...f, default_price: e.target.value }))}
               placeholder="0"
               className="w-full px-3 py-2 text-sm border border-linen-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-300"
-              required
             />
           </div>
           <div className="w-36">

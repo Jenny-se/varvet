@@ -8,6 +8,7 @@ interface InventoryCardProps {
   item: InventoryItem
   onEdit: () => void
   onDelete: () => void
+  onToggleActive: () => void
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -16,13 +17,13 @@ const CATEGORY_LABELS: Record<string, string> = {
   accessories: 'Tillbehör',
 }
 
-export function InventoryCard({ item, onEdit, onDelete }: InventoryCardProps) {
+export function InventoryCard({ item, onEdit, onDelete, onToggleActive }: InventoryCardProps) {
   const isLowStock = item.quantity_in_stock <= item.low_stock_threshold
   const isOutOfStock = item.quantity_in_stock === 0
 
   return (
     <div className={`card p-5 hover:shadow-md transition-shadow duration-200 ${
-      isLowStock ? 'border-amber-200' : ''
+      !item.active ? 'opacity-50' : isLowStock ? 'border-amber-200' : ''
     }`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -32,6 +33,13 @@ export function InventoryCard({ item, onEdit, onDelete }: InventoryCardProps) {
           )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            onClick={onToggleActive}
+            title={item.active ? 'Inaktivera' : 'Aktivera'}
+            className={`w-8 h-4 rounded-full transition-colors flex-shrink-0 ${item.active ? 'bg-sage-500' : 'bg-linen-300'}`}
+          >
+            <span className={`block w-3 h-3 rounded-full bg-white shadow transition-transform mx-0.5 ${item.active ? 'translate-x-4' : 'translate-x-0'}`} />
+          </button>
           <button
             onClick={onEdit}
             className="p-1.5 rounded-lg text-warm-400 hover:text-warm-700 hover:bg-cream-200 transition-colors"

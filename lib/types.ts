@@ -38,6 +38,7 @@ export interface InventoryItem {
   supplier_id: string | null
   supplier?: Supplier
   low_stock_threshold: number
+  active: boolean
   category: InventoryCategory
   tags: string[]
   notes: string | null
@@ -162,6 +163,7 @@ export interface ReceiptItem {
   receipt_id: string
   product_name: string
   receipt_product_id: string | null
+  inventory_id: string | null
   quantity: number
   unit_price: number
   vat_rate: number
