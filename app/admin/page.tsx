@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { ReceiptProduct } from '@/lib/types'
-import { Plus, Pencil, Trash2, Check, X, Search } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, X, Search, GripVertical } from 'lucide-react'
 
 const EMPTY_FORM = { name: '', default_price: '', vat_rate: '25' }
 
@@ -16,6 +16,8 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
   const [showInactive, setShowInactive] = useState(true)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
+  const dragId = useRef<string | null>(null)
 
   const visibleProducts = useMemo(() =>
     products.filter(p => {
@@ -72,8 +74,31 @@ export default function AdminPage() {
   }
 
   async function toggleActive(p: ReceiptProduct) {
-    await supabase.from('receipt_products').update({ active: !p.active }).eq('id', p.id)
+    const newActive = !p.active
+    await Promise.all([
+      supabase.from('receipt_products').update({ active: newActive }).eq('id', p.id),
+      supabase.from('inventory').update({ active: newActive }).ilike('product_name', `%${p.name}%`),
+    ])
     load()
+  }
+
+  async function handleDrop(targetId: string) {
+    const fromId = dragId.current
+    if (!fromId || fromId === targetId) { setDragOverId(null); return }
+
+    const from = products.findIndex(p => p.id === fromId)
+    const to = products.findIndex(p => p.id === targetId)
+    const reordered = [...products]
+    const [moved] = reordered.splice(from, 1)
+    reordered.splice(to, 0, moved)
+    const withOrder = reordered.map((p, i) => ({ ...p, sort_order: i }))
+    setProducts(withOrder)
+    setDragOverId(null)
+    dragId.current = null
+
+    await Promise.all(
+      withOrder.map(p => supabase.from('receipt_products').update({ sort_order: p.sort_order }).eq('id', p.id))
+    )
   }
 
   async function deleteProduct(id: string) {
@@ -177,6 +202,7 @@ export default function AdminPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-linen-100">
+                <th className="w-8 px-2 py-2.5" />
                 <th className="text-left px-5 py-2.5 text-xs font-medium text-warm-500">Produkt</th>
                 <th className="text-right px-4 py-2.5 text-xs font-medium text-warm-500">Pris</th>
                 <th className="text-center px-4 py-2.5 text-xs font-medium text-warm-500">Moms</th>
@@ -186,9 +212,21 @@ export default function AdminPage() {
             </thead>
             <tbody className="divide-y divide-linen-100">
               {visibleProducts.map(p => (
-                <tr key={p.id} className={`hover:bg-cream-50 transition-colors ${!p.active ? 'opacity-50' : ''}`}>
+                <tr
+                  key={p.id}
+                  draggable={!search.trim()}
+                  onDragStart={() => { dragId.current = p.id }}
+                  onDragOver={e => { e.preventDefault(); setDragOverId(p.id) }}
+                  onDragLeave={() => setDragOverId(null)}
+                  onDrop={() => handleDrop(p.id)}
+                  onDragEnd={() => { dragId.current = null; setDragOverId(null) }}
+                  className={`transition-colors ${!p.active ? 'opacity-50' : ''} ${
+                    dragOverId === p.id ? 'bg-sage-50 border-t-2 border-sage-400' : 'hover:bg-cream-50'
+                  }`}
+                >
                   {editingId === p.id ? (
                     <>
+                      <td className="px-2 py-2" />
                       <td className="px-5 py-2">
                         <input
                           value={editForm.name}
@@ -220,19 +258,12 @@ export default function AdminPage() {
                       <td />
                       <td className="px-4 py-2">
                         <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => saveEdit(p.id)}
-                            disabled={saving}
-                            className="p-1 text-sage-600 hover:bg-sage-100 rounded transition-colors"
-                            title="Spara"
-                          >
+                          <button onClick={() => saveEdit(p.id)} disabled={saving}
+                            className="p-1 text-sage-600 hover:bg-sage-100 rounded transition-colors" title="Spara">
                             <Check className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="p-1 text-warm-400 hover:bg-cream-200 rounded transition-colors"
-                            title="Avbryt"
-                          >
+                          <button onClick={() => setEditingId(null)}
+                            className="p-1 text-warm-400 hover:bg-cream-200 rounded transition-colors" title="Avbryt">
                             <X className="w-4 h-4" />
                           </button>
                         </div>
@@ -240,6 +271,9 @@ export default function AdminPage() {
                     </>
                   ) : (
                     <>
+                      <td className="px-2 py-3 text-center">
+                        <GripVertical className={`w-4 h-4 text-warm-300 mx-auto ${!search.trim() ? 'cursor-grab active:cursor-grabbing' : 'opacity-0'}`} />
+                      </td>
                       <td className="px-5 py-3 font-medium text-warm-900">{p.name}</td>
                       <td className="px-4 py-3 text-right text-warm-700">{p.default_price.toFixed(2).replace('.', ',')} kr</td>
                       <td className="px-4 py-3 text-center">
@@ -248,28 +282,20 @@ export default function AdminPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => toggleActive(p)}
+                        <button onClick={() => toggleActive(p)}
                           className={`w-8 h-4 rounded-full transition-colors ${p.active ? 'bg-sage-500' : 'bg-linen-300'}`}
-                          title={p.active ? 'Klicka för att inaktivera' : 'Klicka för att aktivera'}
-                        >
+                          title={p.active ? 'Klicka för att inaktivera' : 'Klicka för att aktivera'}>
                           <span className={`block w-3 h-3 rounded-full bg-white shadow transition-transform mx-0.5 ${p.active ? 'translate-x-4' : 'translate-x-0'}`} />
                         </button>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => startEdit(p)}
-                            className="p-1 text-warm-400 hover:text-warm-700 hover:bg-cream-200 rounded transition-colors"
-                            title="Redigera"
-                          >
+                          <button onClick={() => startEdit(p)}
+                            className="p-1 text-warm-400 hover:text-warm-700 hover:bg-cream-200 rounded transition-colors" title="Redigera">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button
-                            onClick={() => deleteProduct(p.id)}
-                            className="p-1 text-warm-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                            title="Ta bort"
-                          >
+                          <button onClick={() => deleteProduct(p.id)}
+                            className="p-1 text-warm-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Ta bort">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>

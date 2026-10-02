@@ -82,11 +82,6 @@ export default function InventoryPage() {
     fetchData()
   }
 
-  async function handleToggleActive(item: InventoryItem) {
-    await supabase.from('inventory').update({ active: !item.active }).eq('id', item.id)
-    fetchData()
-  }
-
   async function handleDelete() {
     if (!deletingId) return
     const item = items.find(i => i.id === deletingId)
@@ -234,7 +229,6 @@ export default function InventoryPage() {
               item={item}
               onEdit={() => { setEditingItem(item); setShowForm(true) }}
               onDelete={() => setDeletingId(item.id)}
-              onToggleActive={() => handleToggleActive(item)}
             />
           ))}
         </div>
