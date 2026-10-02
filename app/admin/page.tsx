@@ -74,11 +74,7 @@ export default function AdminPage() {
   }
 
   async function toggleActive(p: ReceiptProduct) {
-    const newActive = !p.active
-    await Promise.all([
-      supabase.from('receipt_products').update({ active: newActive }).eq('id', p.id),
-      supabase.from('inventory').update({ active: newActive }).ilike('product_name', `%${p.name}%`),
-    ])
+    await supabase.from('receipt_products').update({ active: !p.active }).eq('id', p.id)
     load()
   }
 
