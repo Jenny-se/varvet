@@ -80,7 +80,9 @@ export default function InventoryPage() {
     }
     const diff = orderOf(a) - orderOf(b)
     if (diff !== 0) return diff
-    return a.product_name.localeCompare(b.product_name, 'sv')
+    const nameDiff = a.product_name.localeCompare(b.product_name, 'sv')
+    if (nameDiff !== 0) return nameDiff
+    return (a.colorway ?? '').localeCompare(b.colorway ?? '', 'sv')
   })
 
   async function handleSubmit(data: InventoryInput) {
