@@ -13,9 +13,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {isLoginPage ? (
         <>{children}</>
       ) : (
-        <div className="flex h-screen overflow-hidden">
+        <div className="flex h-screen overflow-hidden print:block print:h-auto">
           <Sidebar />
-          <main className="flex-1 overflow-y-auto bg-cream-100 scrollbar-thin pt-14 md:pt-0">
+          <main className="flex-1 overflow-y-auto bg-cream-100 scrollbar-thin pt-14 md:pt-0 print:pt-0 print:overflow-visible">
             {children}
           </main>
         </div>
