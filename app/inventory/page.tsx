@@ -62,7 +62,7 @@ export default function InventoryPage() {
 
   const filtered = items.filter(item => {
     const nameL = item.product_name.toLowerCase()
-    const linkedToInactive = [...inactiveProductNames].some(n => nameL.includes(n))
+    const linkedToInactive = Array.from(inactiveProductNames).some(n => nameL.includes(n))
     if (!showInactive && linkedToInactive) return false
     if (search && !item.product_name.toLowerCase().includes(search.toLowerCase()) &&
         !(item.colorway?.toLowerCase().includes(search.toLowerCase())) &&
