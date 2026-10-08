@@ -22,8 +22,14 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/components/auth/AuthProvider'
 
 const navItems = [
-  { href: '/receipts', label: 'Kvitton', icon: FileText },
+  { href: '/dashboard', label: 'Översikt', icon: LayoutDashboard },
+  { href: '/suppliers', label: 'Leverantörer', icon: Package },
   { href: '/inventory', label: 'Lager', icon: Boxes },
+  { href: '/kanban', label: 'Uppgifter', icon: KanbanSquare },
+  { href: '/moodboards', label: 'Moodboards', icon: ImageIcon },
+  { href: '/documents', label: 'Dokument', icon: FolderOpen },
+  { href: '/expenses', label: 'Utgifter', icon: Receipt },
+  { href: '/receipts', label: 'Kvitton', icon: FileText },
   { href: '/admin', label: 'Admin', icon: Settings },
 ]
 
