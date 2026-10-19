@@ -17,9 +17,9 @@ const COMPANY = {
   returnPolicy: 'Returer och byten enligt gällande villkor.',
 }
 
-const GOLD = [181, 146, 42] as const   // #b5922a
-const DARK = [30, 16, 8] as const      // warm-900
-const MID  = [100, 80, 60] as const    // warm-600
+const GOLD: [number, number, number] = [181, 146, 42]
+const DARK: [number, number, number] = [30, 16, 8]
+const MID:  [number, number, number] = [100, 80, 60]
 
 function formatSEK(n: number) {
   const rounded = Math.round(n * 100) / 100
