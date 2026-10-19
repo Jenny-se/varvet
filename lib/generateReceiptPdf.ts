@@ -9,11 +9,10 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 const COMPANY = {
   email: 'info@varvetgarn.se',
-  phone: '0733-503034',
   swish: '123-143 89 93',
   bankgiro: '5479-4375',
   orgnr: '556683-4510',
-  momsreg: 'SE55668345101',
+  legalName: 'Stepwise',
   returnPolicy: 'Returer och byten enligt gällande villkor.',
 }
 
@@ -176,11 +175,9 @@ export async function generateReceiptPdf(receipt: Receipt): Promise<void> {
   doc.setTextColor(...GOLD)
   const footerLines = [
     `E-post: ${COMPANY.email}`,
-    `Telefon: ${COMPANY.phone}`,
     `Swish: ${COMPANY.swish}`,
     `Bankgiro: ${COMPANY.bankgiro}`,
-    `Organisationsnummer: ${COMPANY.orgnr}`,
-    `Momsregistrering: ${COMPANY.momsreg}`,
+    `Organisationsnummer: ${COMPANY.orgnr} ${COMPANY.legalName}`,
   ]
   for (const line of footerLines) {
     doc.text(line, ML, y)

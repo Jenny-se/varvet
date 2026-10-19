@@ -17,11 +17,10 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 const COMPANY = {
   email: 'info@varvetgarn.se',
-  phone: '0733-503034',
   swish: '123-143 89 93',
   bankgiro: '5479-4375',
   orgnr: '556683-4510',
-  momsreg: 'SE55668345101',
+  legalName: 'Stepwise',
   returnPolicy: 'Returer och byten enligt gällande villkor.',
 }
 
@@ -126,11 +125,9 @@ function ReceiptBlock({ receipt }: { receipt: Receipt }) {
 
       <div className="text-xs space-y-0.5" style={{ color: '#b5922a' }}>
         <p>E-post: {COMPANY.email}</p>
-        <p>Telefon: {COMPANY.phone}</p>
         <p>Swish: {COMPANY.swish}</p>
         <p>Bankgiro: {COMPANY.bankgiro}</p>
-        <p>Organisationsnummer: {COMPANY.orgnr}</p>
-        <p>Momsregistrering: {COMPANY.momsreg}</p>
+        <p>Organisationsnummer: {COMPANY.orgnr} {COMPANY.legalName}</p>
         <p className="mt-1 text-warm-600">{COMPANY.returnPolicy}</p>
       </div>
     </div>
