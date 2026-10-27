@@ -26,19 +26,33 @@ function parseEventSlug(slug: string) {
 
 export default function DashboardPage() {
   const [events, setEvents] = useState<EventSummary[]>([])
+  const [latestNames, setLatestNames] = useState<Record<string, string[]>>({})
 
   useEffect(() => {
-    supabase
-      .from('event_registration_summary')
-      .select('*')
-      .then(({ data }) => {
-        const today = new Date().toISOString().slice(0, 10)
-        // Visa bara kommande event
-        setEvents(((data ?? []) as EventSummary[]).filter(e => {
-          const iso = parseEventSlug(e.event_slug).isoDate
-          return !iso || iso >= today
-        }))
+    async function load() {
+      const { data } = await supabase.from('event_registration_summary').select('*')
+      const today = new Date().toISOString().slice(0, 10)
+      // Visa bara kommande event
+      const upcoming = ((data ?? []) as EventSummary[]).filter(e => {
+        const iso = parseEventSlug(e.event_slug).isoDate
+        return !iso || iso >= today
       })
+      setEvents(upcoming)
+
+      const names: Record<string, string[]> = {}
+      await Promise.all(upcoming.map(async e => {
+        const { data: regs } = await supabase
+          .from('event_registrations')
+          .select('name')
+          .eq('event_slug', e.event_slug)
+          .is('cancelled_at', null)
+          .order('created_at', { ascending: false })
+          .limit(5)
+        names[e.event_slug] = (regs ?? []).map(r => r.name)
+      }))
+      setLatestNames(names)
+    }
+    load()
   }, [])
 
   return (
@@ -68,6 +82,11 @@ export default function DashboardPage() {
             <p className="text-sm text-warm-600">
               {e.anmalningar} anmälningar · {e.soppor ?? 0} vill ha soppa
             </p>
+            {latestNames[e.event_slug]?.length > 0 && (
+              <p className="mt-2 pt-2 border-t border-linen-200 text-xs text-warm-500">
+                Senast: {latestNames[e.event_slug].join(', ')}
+              </p>
+            )}
           </div>
         )
       })}
