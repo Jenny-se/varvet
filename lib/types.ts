@@ -42,8 +42,32 @@ export interface InventoryItem {
   category: InventoryCategory
   tags: string[]
   notes: string | null
+  sku: string | null
   created_at: string
   updated_at: string
+}
+
+export type StocktakeStatus = 'open' | 'applied' | 'cancelled'
+
+export interface Stocktake {
+  id: string
+  name: string
+  status: StocktakeStatus
+  notes: string | null
+  created_by: string | null
+  created_at: string
+  applied_at: string | null
+  applied_by: string | null
+}
+
+export interface StocktakeCount {
+  id: string
+  stocktake_id: string
+  inventory_id: string
+  counted_qty: number
+  system_qty: number
+  counted_by: string | null
+  counted_at: string
 }
 
 export interface KanbanColumn {

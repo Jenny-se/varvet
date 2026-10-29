@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Package,
   Boxes,
+  ClipboardCheck,
   KanbanSquare,
   ImageIcon,
   FolderOpen,
@@ -25,6 +26,7 @@ const navItems = [
   { href: '/dashboard', label: 'Översikt', icon: LayoutDashboard },
   { href: '/suppliers', label: 'Leverantörer', icon: Package },
   { href: '/inventory', label: 'Lager', icon: Boxes },
+  { href: '/inventory/count', label: 'Inventering', icon: ClipboardCheck },
   { href: '/kanban', label: 'Uppgifter', icon: KanbanSquare },
   { href: '/moodboards', label: 'Moodboards', icon: ImageIcon },
   { href: '/documents', label: 'Dokument', icon: FolderOpen },
@@ -65,7 +67,9 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(href + '/')
+          // Markera bara den mest specifika länken, så att Lager inte lyser på /inventory/count
+          const matches = (h: string) => pathname === h || pathname.startsWith(h + '/')
+          const active = matches(href) && !navItems.some(n => n.href.length > href.length && matches(n.href))
           return (
             <Link
               key={href}

@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { Plus, Search, Boxes, AlertTriangle, LayoutList, LayoutGrid, Edit2, Trash2 } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Search, Boxes, AlertTriangle, LayoutList, LayoutGrid, Edit2, Trash2, ClipboardCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { InventoryItem, ReceiptProduct, Supplier, YarnWeight, InventoryCategory } from '@/lib/types'
 import { logActivity } from '@/lib/activity'
@@ -114,13 +115,19 @@ export default function InventoryPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-xl font-semibold text-warm-900">Lager</h1>
-        <button
-          onClick={() => { setEditingItem(null); setShowForm(true) }}
-          className="btn-primary flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Lägg till
-        </button>
+        <div className="flex items-center gap-2">
+          <Link href="/inventory/count" className="btn-secondary flex items-center gap-2">
+            <ClipboardCheck className="w-4 h-4" />
+            Inventera
+          </Link>
+          <button
+            onClick={() => { setEditingItem(null); setShowForm(true) }}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Lägg till
+          </button>
+        </div>
       </div>
 
       {/* View toggle */}

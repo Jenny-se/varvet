@@ -39,6 +39,7 @@ export function InventoryForm({ initial, suppliers, onSubmit, onCancel, submitti
     category: initial?.category ?? 'yarn',
     tags: initial?.tags ?? [],
     notes: initial?.notes ?? '',
+    sku: initial?.sku ?? '',
   })
 
   const [tagInput, setTagInput] = useState('')
@@ -61,7 +62,8 @@ export function InventoryForm({ initial, suppliers, onSubmit, onCancel, submitti
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    await onSubmit(form)
+    // Tomt artikelnummer sparas som null – sku måste vara unikt när det finns
+    await onSubmit({ ...form, sku: form.sku?.trim() || null })
   }
 
   return (
@@ -107,6 +109,15 @@ export function InventoryForm({ initial, suppliers, onSubmit, onCancel, submitti
             className="input-field"
             value={form.colorway ?? ''}
             onChange={e => set('colorway', e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="label">Artikelnummer (SKU)</label>
+          <input
+            className="input-field"
+            placeholder="Samma som i Shopify"
+            value={form.sku ?? ''}
+            onChange={e => set('sku', e.target.value)}
           />
         </div>
         <div>
