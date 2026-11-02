@@ -6,6 +6,7 @@ const PAGES = [
   'https://garnr.se/p/rauma-fivel/',
   'https://garnr.se/p/rauma-lamull/',
   'https://garnr.se/p/istex-lettlopi/',
+  'https://garnr.se/p/rauma-mild-mohair/',
 ]
 
 const supabase = createClient(

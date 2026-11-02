@@ -110,12 +110,14 @@ Required secrets:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 ### Stock scraper (`scrape-stock.yml`)
-Runs every day at 06:00 UTC (08:00 Swedish summer time). Scrapes stock levels for three Rauma yarn products from garnr.se and saves daily snapshots to the `stock_snapshots` table.
+Runs every day at 06:00 UTC (08:00 Swedish summer time). Scrapes stock levels for Rauma and Ístex yarns from garnr.se and saves daily snapshots to the `stock_snapshots` table.
 
 Tracked products:
 - Rauma Finull — https://garnr.se/p/rauma-finull/
 - Rauma Fivel — https://garnr.se/p/rauma-fivel/
 - Rauma Lamull — https://garnr.se/p/rauma-lamull/
+- Ístex Léttlopi — https://garnr.se/p/istex-lettlopi/
+- Rauma Mild Mohair — https://garnr.se/p/rauma-mild-mohair/
 
 Required secret:
 - `SUPABASE_SERVICE_ROLE_KEY` — found in Supabase → Settings → API → service_role key
