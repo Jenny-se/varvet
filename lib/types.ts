@@ -70,6 +70,30 @@ export interface StocktakeCount {
   counted_at: string
 }
 
+export type KitOrderStatus = 'ny' | 'bekraftad' | 'skickad' | 'hamtad' | 'avbruten'
+
+export interface KitOrder {
+  id: string
+  kit_slug: string
+  name: string
+  email: string
+  phone: string | null
+  delivery: 'hamta' | 'skicka'
+  address: string | null
+  size: string | null
+  qty_dark: number
+  qty_mid: number
+  qty_light: number
+  qty_book: number
+  qty_accent: number
+  accent_colors: string | null
+  message: string | null
+  total_sek: number
+  status: KitOrderStatus
+  created_at: string
+  updated_at: string
+}
+
 export interface KanbanColumn {
   id: string
   title: string

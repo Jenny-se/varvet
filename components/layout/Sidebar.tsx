@@ -8,6 +8,7 @@ import {
   Boxes,
   ClipboardCheck,
   TrendingUp,
+  ShoppingBag,
   KanbanSquare,
   ImageIcon,
   FolderOpen,
@@ -34,6 +35,7 @@ const navItems = [
   { href: '/documents', label: 'Dokument', icon: FolderOpen },
   { href: '/expenses', label: 'Utgifter', icon: Receipt },
   { href: '/receipts', label: 'Kvitton', icon: FileText },
+  { href: '/kit-orders', label: 'Kitbeställningar', icon: ShoppingBag },
   { href: '/admin', label: 'Admin', icon: Settings },
 ]
 
