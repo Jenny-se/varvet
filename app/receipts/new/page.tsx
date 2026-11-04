@@ -12,6 +12,10 @@ import { Plus, Trash2, ArrowLeft, Search, Minus, X } from 'lucide-react'
 function colorNameToHex(name: string): string {
   const n = name.toLowerCase().trim()
 
+  // Exakta namn (Chamotte mörk/mellangrå/ljus) – "ljus" som delord skulle annars träffa ljusblå m.fl.
+  const exact: Record<string, string> = { 'mörk': '#282828', 'mellangrå': '#989490', ljus: '#F0EAD8' }
+  if (exact[n]) return exact[n]
+
   // Xolla Peülla / Bauma specific (Valencian / Catalan names)
   const xolla: Record<string, string> = {
     // ── Peülla ──
