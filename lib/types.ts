@@ -43,6 +43,7 @@ export interface InventoryItem {
   tags: string[]
   notes: string | null
   sku: string | null
+  product_id: string | null // produkten i Admin (receipt_products) som färgen hör till
   created_at: string
   updated_at: string
 }

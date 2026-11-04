@@ -57,13 +57,10 @@ export default function InventoryPage() {
   const totalCost = items.reduce((sum, i) => sum + (i.cost_price ?? 0) * i.quantity_in_stock, 0)
   const totalValue = totalRetail
 
-  const inactiveProductNames = useMemo(() =>
-    new Set(receiptProducts.filter(p => !p.active).map(p => p.name.toLowerCase()))
-  , [receiptProducts])
+  const productById = useMemo(() => new Map(receiptProducts.map(p => [p.id, p])), [receiptProducts])
 
   const filtered = items.filter(item => {
-    const nameL = item.product_name.toLowerCase()
-    const linkedToInactive = Array.from(inactiveProductNames).some(n => nameL.includes(n))
+    const linkedToInactive = item.product_id ? productById.get(item.product_id)?.active === false : false
     if (!showInactive && linkedToInactive) return false
     if (search && !item.product_name.toLowerCase().includes(search.toLowerCase()) &&
         !(item.colorway?.toLowerCase().includes(search.toLowerCase())) &&
@@ -75,8 +72,7 @@ export default function InventoryPage() {
     return true
   }).sort((a, b) => {
     const orderOf = (item: InventoryItem) => {
-      const nameL = item.product_name.toLowerCase()
-      const match = receiptProducts.find(p => nameL.includes(p.name.toLowerCase()))
+      const match = item.product_id ? productById.get(item.product_id) : undefined
       return match ? match.sort_order : 9999
     }
     const diff = orderOf(a) - orderOf(b)
@@ -347,6 +343,7 @@ export default function InventoryPage() {
           <InventoryForm
             initial={editingItem ?? undefined}
             suppliers={suppliers}
+            products={receiptProducts}
             onSubmit={handleSubmit}
             onCancel={() => { setShowForm(false); setEditingItem(null) }}
             submitting={submitting}

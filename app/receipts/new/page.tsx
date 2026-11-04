@@ -256,7 +256,7 @@ export default function NewReceiptPage() {
     const { data } = await supabase
       .from('inventory')
       .select('id, colorway, retail_price')
-      .ilike('product_name', `%${p.name}%`)
+      .eq('product_id', p.id)
       .eq('active', true)
       .not('colorway', 'is', null)
       .not('retail_price', 'is', null)

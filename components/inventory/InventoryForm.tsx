@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { InventoryItem, Supplier, YarnWeight, InventoryCategory } from '@/lib/types'
+import { InventoryItem, ReceiptProduct, Supplier, YarnWeight, InventoryCategory } from '@/lib/types'
 
 type InventoryInput = Omit<InventoryItem, 'id' | 'created_at' | 'updated_at' | 'supplier'>
 
@@ -16,12 +16,13 @@ const CATEGORY_LABELS: Record<InventoryCategory, string> = {
 interface InventoryFormProps {
   initial?: Partial<InventoryInput>
   suppliers: Supplier[]
+  products: ReceiptProduct[]
   onSubmit: (data: InventoryInput) => Promise<void>
   onCancel: () => void
   submitting: boolean
 }
 
-export function InventoryForm({ initial, suppliers, onSubmit, onCancel, submitting }: InventoryFormProps) {
+export function InventoryForm({ initial, suppliers, products, onSubmit, onCancel, submitting }: InventoryFormProps) {
   const [form, setForm] = useState<InventoryInput>({
     product_name: initial?.product_name ?? '',
     colorway: initial?.colorway ?? '',
@@ -40,6 +41,7 @@ export function InventoryForm({ initial, suppliers, onSubmit, onCancel, submitti
     tags: initial?.tags ?? [],
     notes: initial?.notes ?? '',
     sku: initial?.sku ?? '',
+    product_id: initial?.product_id ?? null,
   })
 
   const [tagInput, setTagInput] = useState('')
@@ -77,6 +79,20 @@ export function InventoryForm({ initial, suppliers, onSubmit, onCancel, submitti
             value={form.product_name}
             onChange={e => set('product_name', e.target.value)}
           />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="label">Produkt i kvitton/Admin</label>
+          <select
+            className="input-field"
+            value={form.product_id ?? ''}
+            onChange={e => set('product_id', e.target.value || null)}
+          >
+            <option value="">Ingen (nya rader kopplas efter namnet)</option>
+            {products.map(p => (
+              <option key={p.id} value={p.id}>{p.name}{p.active ? '' : ' (inaktiv)'}</option>
+            ))}
+          </select>
+          <p className="text-xs text-warm-400 mt-1">Färgen dyker upp under den här produkten när man gör kvitto.</p>
         </div>
         <div>
           <label className="label">Kategori</label>
