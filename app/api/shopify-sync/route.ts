@@ -8,7 +8,8 @@ export const maxDuration = 60
 
 export async function POST(request: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  // Tål citattecken och mellanslag om nyckeln klistrats in i Vercel direkt från .env.local
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim().replace(/^["']|["']$/g, '')
   const { SHOPIFY_STORE_DOMAIN, SHOPIFY_CLIENT_ID, SHOPIFY_CLIENT_SECRET } = process.env
   if (!url || !serviceKey || !SHOPIFY_STORE_DOMAIN || !SHOPIFY_CLIENT_ID || !SHOPIFY_CLIENT_SECRET) {
     return NextResponse.json({ error: 'Synken är inte konfigurerad (miljövariabler saknas i Vercel).' }, { status: 500 })
