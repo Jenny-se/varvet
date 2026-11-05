@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Boxes, AlertTriangle, LayoutList, LayoutGrid, Edit2, Trash2, ClipboardCheck } from 'lucide-react'
+import { Plus, Search, Boxes, AlertTriangle, LayoutList, LayoutGrid, Edit2, Trash2, ClipboardCheck, RefreshCw } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { InventoryItem, ReceiptProduct, Supplier, YarnWeight, InventoryCategory } from '@/lib/types'
 import { logActivity } from '@/lib/activity'
@@ -35,19 +35,43 @@ export default function InventoryPage() {
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [syncMessage, setSyncMessage] = useState<{ text: string; error?: boolean } | null>(null)
+  const [lastSync, setLastSync] = useState<{ last_run_at: string | null; last_result: string | null } | null>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
-    const [{ data: itemData }, { data: supplierData }, { data: rpData }] = await Promise.all([
+    const [{ data: itemData }, { data: supplierData }, { data: rpData }, { data: syncData }] = await Promise.all([
       supabase.from('inventory').select('*, supplier:suppliers(id, company_name, status)').order('product_name'),
       supabase.from('suppliers').select('*').eq('status', 'active').order('company_name'),
       supabase.from('receipt_products').select('*').order('sort_order'),
+      supabase.from('shopify_sync_state').select('last_run_at, last_result').maybeSingle(),
     ])
     setItems((itemData as InventoryItem[]) ?? [])
     setSuppliers(supplierData ?? [])
     setReceiptProducts(rpData ?? [])
+    setLastSync(syncData ?? null)
     setLoading(false)
   }, [])
+
+  // Samma synk som körs automatiskt var 15:e minut: webbordrar drar av lagret, saldon skrivs till Shopify
+  async function handleShopifySync() {
+    setSyncing(true)
+    setSyncMessage(null)
+    const { data: { session } } = await supabase.auth.getSession()
+    try {
+      const res = await fetch('/api/shopify-sync', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
+      })
+      const body = await res.json()
+      setSyncMessage(res.ok ? { text: `Klart: ${body.summary}.` } : { text: body.error ?? 'Synken misslyckades.', error: true })
+    } catch {
+      setSyncMessage({ text: 'Kunde inte nå synken. Försök igen.', error: true })
+    }
+    setSyncing(false)
+    fetchData()
+  }
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -112,6 +136,15 @@ export default function InventoryPage() {
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-xl font-semibold text-warm-900">Lager</h1>
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleShopifySync}
+            disabled={syncing}
+            className="btn-secondary flex items-center gap-2 disabled:opacity-60"
+            title="Drar av webbordrar och skickar lagersaldon till Shopify"
+          >
+            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Synkar…' : 'Synka Shopify'}
+          </button>
           <Link href="/inventory/count" className="btn-secondary flex items-center gap-2">
             <ClipboardCheck className="w-4 h-4" />
             Inventera
@@ -125,6 +158,13 @@ export default function InventoryPage() {
           </button>
         </div>
       </div>
+
+      {/* Shopify sync status */}
+      {(syncMessage || lastSync?.last_run_at) && (
+        <p className={`text-xs -mt-3 mb-4 text-right ${syncMessage?.error ? 'text-red-600' : 'text-warm-400'}`}>
+          {syncMessage?.text ?? `Senaste Shopify-synk ${new Date(lastSync!.last_run_at!).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' })}: ${lastSync!.last_result}`}
+        </p>
+      )}
 
       {/* View toggle */}
       <div className="flex justify-end mb-3">
