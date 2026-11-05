@@ -87,6 +87,7 @@ export interface KitOrder {
   qty_light: number
   qty_book: number
   qty_accent: number
+  book_signed: boolean
   accent_colors: string | null
   message: string | null
   total_sek: number

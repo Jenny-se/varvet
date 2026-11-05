@@ -26,15 +26,25 @@ const STATUS_COLORS: Record<KitOrderStatus, string> = {
 
 const STATUS_ORDER: KitOrderStatus[] = ['ny', 'bekraftad', 'skickad', 'hamtad', 'avbruten']
 
-const KIT_LABELS: Record<string, string> = { 'haugvag-chamotte': 'Haugvag i Chamotte' }
+const KIT_LABELS: Record<string, string> = {
+  'haugvag-chamotte': 'Haugvag i Chamotte',
+  'sticka-tidlosa-plagg': 'Sticka tidlösa plagg',
+}
+
+// Vilken bok qty_book avser, per kit
+const KIT_BOOKS: Record<string, string> = {
+  'haugvag-chamotte': 'Ön och skogen',
+  'sticka-tidlosa-plagg': 'Sticka tidlösa plagg',
+}
 
 function orderLines(o: KitOrder) {
+  const book = `Boken ${KIT_BOOKS[o.kit_slug] ?? ''}`.trim() + (o.book_signed ? ' (signerad)' : '')
   return [
     [o.qty_dark, 'Chamotte mörk'],
     [o.qty_mid, 'Chamotte mellan'],
     [o.qty_light, 'Chamotte ljus'],
     [o.qty_accent, 'Accentfärg 20 g'],
-    [o.qty_book, 'Boken Ön och skogen'],
+    [o.qty_book, book],
   ].filter(([n]) => (n as number) > 0) as [number, string][]
 }
 
@@ -80,7 +90,9 @@ export default function KitOrdersPage() {
     mid: active.reduce((s, o) => s + o.qty_mid, 0),
     light: active.reduce((s, o) => s + o.qty_light, 0),
     accent: active.reduce((s, o) => s + o.qty_accent, 0),
-    book: active.reduce((s, o) => s + o.qty_book, 0),
+    onBook: active.filter(o => o.kit_slug === 'haugvag-chamotte').reduce((s, o) => s + o.qty_book, 0),
+    tpBook: active.filter(o => o.kit_slug === 'sticka-tidlosa-plagg').reduce((s, o) => s + o.qty_book, 0),
+    tpSigned: active.filter(o => o.kit_slug === 'sticka-tidlosa-plagg' && o.book_signed).reduce((s, o) => s + o.qty_book, 0),
     sek: active.reduce((s, o) => s + Number(o.total_sek), 0),
   }
 
@@ -88,17 +100,19 @@ export default function KitOrdersPage() {
     <div className="p-6 md:p-8 max-w-5xl mx-auto">
       <div className="mb-5">
         <h1 className="text-xl font-semibold text-warm-900">Kitbeställningar</h1>
-        <p className="text-sm text-warm-500 mt-1">Beställningar från formuläret på hemsidan.</p>
+        <p className="text-sm text-warm-500 mt-1">Beställningar från formulären på hemsidan (Haugvag-kit och Sticka tidlösa plagg).</p>
       </div>
 
       {/* Totals, so you know how much yarn and how many books to set aside */}
-      <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         {([
           ['Nya', orders.filter(o => o.status === 'ny').length, 'att bekräfta'],
           ['Chamotte mörk', totals.dark, 'härvor'],
           ['Chamotte mellan', totals.mid, 'härvor'],
           ['Chamotte ljus', totals.light, 'härvor'],
-          ['Accent / böcker', `${totals.accent} / ${totals.book}`, 'st'],
+          ['Accentfärg 20 g', totals.accent, 'nystan'],
+          ['Ön och skogen', totals.onBook, 'böcker'],
+          ['Sticka tidlösa plagg', totals.tpBook, `böcker, varav ${totals.tpSigned} signerade`],
           ['Summa', Math.round(totals.sek).toLocaleString('sv-SE'), 'kr exkl. frakt'],
         ] as [string, string | number, string][]).map(([label, value, sub]) => (
           <div key={label} className="bg-white border border-linen-200 rounded-xl p-3">
@@ -170,7 +184,7 @@ export default function KitOrdersPage() {
                       <p className="flex items-center gap-2 text-warm-800 mb-1">
                         <Mail className="w-3.5 h-3.5 text-warm-400" />
                         <a className="underline underline-offset-2"
-                          href={`mailto:${o.email}?subject=${encodeURIComponent('Din beställning hos Varvet – Haugvag')}`}>{o.email}</a>
+                          href={`mailto:${o.email}?subject=${encodeURIComponent(`Din beställning hos Varvet – ${KIT_LABELS[o.kit_slug] ?? 'Varvet'}`)}`}>{o.email}</a>
                       </p>
                       {o.phone && (
                         <p className="flex items-center gap-2 text-warm-800 mb-1">
