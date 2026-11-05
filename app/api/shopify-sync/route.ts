@@ -18,8 +18,11 @@ export async function POST(request: Request) {
 
   // Bara inloggade användare i appen
   const accessToken = request.headers.get('authorization')?.replace(/^Bearer /, '')
-  const { data: { user } } = accessToken ? await supabase.auth.getUser(accessToken) : { data: { user: null } }
-  if (!user) return NextResponse.json({ error: 'Inte inloggad.' }, { status: 401 })
+  if (!accessToken) return NextResponse.json({ error: 'Inte inloggad.' }, { status: 401 })
+  // Inloggningen kontrolleras med samma nyckel som appen använder, oberoende av service role-nyckeln
+  const authClient = createClient(url, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? serviceKey, { auth: { persistSession: false } })
+  const { data: { user }, error: authError } = await authClient.auth.getUser(accessToken)
+  if (!user) return NextResponse.json({ error: `Inte inloggad (${authError?.message ?? 'okänt fel'}).` }, { status: 401 })
 
   try {
     const result = await runShopifySync({
