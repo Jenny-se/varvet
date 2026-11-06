@@ -6,7 +6,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import type { Receipt, ReceiptItem } from '@/lib/types'
-import { ArrowLeft, Printer } from 'lucide-react'
+import { ArrowLeft, Printer, ReceiptText } from 'lucide-react'
+import { shareThermalReceipt } from '@/lib/thermalReceipt'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
 
@@ -56,6 +57,18 @@ export default function ReceiptPage() {
   const { id } = useParams<{ id: string }>()
   const [receipt, setReceipt] = useState<Receipt | null>(null)
   const [loading, setLoading] = useState(true)
+  const [sharing, setSharing] = useState(false)
+
+  async function handleThermal() {
+    if (!receipt) return
+    setSharing(true)
+    try {
+      await shareThermalReceipt(receipt)
+    } catch {
+      alert('Kunde inte skapa kvittobilden. Försök igen.')
+    }
+    setSharing(false)
+  }
 
   useEffect(() => {
     async function load() {
@@ -93,6 +106,15 @@ export default function ReceiptPage() {
         </Link>
         <span className="font-mono text-sm text-warm-700 font-semibold">{receipt.receipt_number}</span>
         <span className="flex-1" />
+        <button
+          onClick={handleThermal}
+          disabled={sharing}
+          title="Kvitto som bild för PeriPage-skrivaren – välj PeriPage eller Spara bild i dela-menyn"
+          className="flex items-center gap-2 px-4 py-2 border border-sage-600 text-sage-700 text-sm font-medium rounded-lg hover:bg-sage-50 transition-colors disabled:opacity-50"
+        >
+          <ReceiptText className="w-4 h-4" />
+          {sharing ? 'Skapar…' : 'Kvittoskrivare'}
+        </button>
         <button
           onClick={() => window.print()}
           className="flex items-center gap-2 px-4 py-2 bg-sage-600 text-white text-sm font-medium rounded-lg hover:bg-sage-700 transition-colors"
