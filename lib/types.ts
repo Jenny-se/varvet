@@ -217,6 +217,7 @@ export interface ReceiptItem {
   quantity: number
   unit_price: number
   vat_rate: number
+  cost_price: number | null // inköpspris per styck exkl. moms, null = okänt
   sort_order: number
   created_at: string
 }

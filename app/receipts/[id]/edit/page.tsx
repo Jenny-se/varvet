@@ -12,6 +12,7 @@ type LineItem = {
   id: string | null
   productName: string
   inventoryId: string | null
+  costPrice: number | null // sparat inköpspris; null = hämtas på nytt när raden sparas
   quantity: string
   unitPrice: string
   vatRate: string
@@ -23,7 +24,7 @@ type Suggestion =
 
 let _key = 0
 function newItem(): LineItem {
-  return { key: ++_key, id: null, productName: '', inventoryId: null, quantity: '1', unitPrice: '', vatRate: '25' }
+  return { key: ++_key, id: null, productName: '', inventoryId: null, costPrice: null, quantity: '1', unitPrice: '', vatRate: '25' }
 }
 
 function ProductSearchCell({
@@ -150,7 +151,8 @@ export default function EditReceiptPage() {
         key: ++_key,
         id: it.id,
         productName: it.product_name,
-        inventoryId: null,
+        inventoryId: it.inventory_id,
+        costPrice: it.cost_price,
         quantity: String(it.quantity),
         unitPrice: String(it.unit_price),
         vatRate: String(it.vat_rate),
@@ -207,6 +209,8 @@ export default function EditReceiptPage() {
         receipt_id: id,
         product_name: it.productName.trim(),
         receipt_product_id: null,
+        inventory_id: it.inventoryId,
+        cost_price: it.costPrice,
         quantity: parseInt(it.quantity) || 1,
         unit_price: parseFloat(it.unitPrice) || 0,
         vat_rate: parseFloat(it.vatRate) || 25,
@@ -290,8 +294,8 @@ export default function EditReceiptPage() {
               <div key={it.key} className="grid grid-cols-[1fr_60px_90px_90px_32px] gap-2 items-start">
                 <div className="space-y-1">
                   <ProductSearchCell value={it.productName}
-                    onChange={v => setItem(it.key, { productName: v, inventoryId: null })}
-                    onSelect={(name, price, vat, invId) => setItem(it.key, { productName: name, unitPrice: price, vatRate: vat, inventoryId: invId })} />
+                    onChange={v => setItem(it.key, { productName: v, inventoryId: null, costPrice: null })}
+                    onSelect={(name, price, vat, invId) => setItem(it.key, { productName: name, unitPrice: price, vatRate: vat, inventoryId: invId, costPrice: null })} />
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-warm-400">Moms:</span>
                     <select value={it.vatRate} onChange={e => setItem(it.key, { vatRate: e.target.value })}

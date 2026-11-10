@@ -51,6 +51,30 @@ export default function ReceiptsPage() {
     selectedMonth ? receipts.filter(r => r.receipt_date.startsWith(selectedMonth)) : receipts
   , [receipts, selectedMonth])
 
+  // Försäljning och vinst för vald period. Vinsten räknas bara på rader med känt inköpspris.
+  const summary = useMemo(() => {
+    let inclVat = 0, exVat = 0, exVatWithCost = 0, cost = 0
+    const missing = new Set<string>()
+    for (const r of filtered) {
+      for (const it of r.items ?? []) {
+        const total = it.quantity * it.unit_price
+        const ex = total / (1 + it.vat_rate / 100)
+        inclVat += total
+        exVat += ex
+        if (it.cost_price == null) { missing.add(it.product_name); continue }
+        exVatWithCost += ex
+        cost += it.cost_price * it.quantity
+      }
+    }
+    const profit = exVatWithCost - cost
+    return {
+      inclVat, exVat, profit,
+      margin: exVatWithCost > 0 ? profit / exVatWithCost : 0,
+      missingAmount: exVat - exVatWithCost,
+      missing: Array.from(missing).sort(),
+    }
+  }, [filtered])
+
   async function handleDelete(r: Receipt) {
     if (!confirm(`Ta bort kvitto ${r.receipt_number}?`)) return
     await supabase.from('receipts').delete().eq('id', r.id)
@@ -132,6 +156,34 @@ export default function ReceiptsPage() {
           </Link>
         </div>
       </div>
+
+      {!loading && filtered.length > 0 && (
+        <div className="mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-white rounded-xl border border-linen-200 px-4 py-3">
+              <p className="text-xs text-warm-500">Försäljning inkl. moms</p>
+              <p className="text-xl font-semibold text-warm-900 mt-0.5">{formatSEK(summary.inclVat)}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-linen-200 px-4 py-3">
+              <p className="text-xs text-warm-500">Försäljning exkl. moms</p>
+              <p className="text-xl font-semibold text-warm-900 mt-0.5">{formatSEK(summary.exVat)}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-linen-200 px-4 py-3">
+              <p className="text-xs text-warm-500">Vinst exkl. moms</p>
+              <p className="text-xl font-semibold text-sage-700 mt-0.5">
+                {formatSEK(summary.profit)}
+                <span className="text-sm font-normal text-warm-500 ml-2">{Math.round(summary.margin * 100)} %</span>
+              </p>
+            </div>
+          </div>
+          {summary.missingAmount >= 1 && (
+            <p className="text-xs text-warm-400 mt-2" title={summary.missing.join(', ')}>
+              {formatSEK(summary.missingAmount)} exkl. moms saknar inköpspris och ingår inte i vinsten
+              ({summary.missing.join(', ')}).
+            </p>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-16 text-warm-400 text-sm">Laddar...</div>
