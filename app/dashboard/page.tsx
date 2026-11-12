@@ -13,6 +13,11 @@ interface EventSummary {
   soppor: number | null
 }
 
+interface Attendee {
+  name: string
+  guests: number
+}
+
 // 'avstickaren-2026-11-12' → { name: 'Avstickaren', date: '12 november', isoDate: '2026-11-12' }
 function parseEventSlug(slug: string) {
   const m = slug.match(/^(.*)-(\d{4}-\d{2}-\d{2})$/)
@@ -27,6 +32,7 @@ function parseEventSlug(slug: string) {
 export default function DashboardPage() {
   const [events, setEvents] = useState<EventSummary[]>([])
   const [latestNames, setLatestNames] = useState<Record<string, string[]>>({})
+  const [attendees, setAttendees] = useState<Record<string, Attendee[]>>({})
 
   useEffect(() => {
     async function load() {
@@ -40,17 +46,20 @@ export default function DashboardPage() {
       setEvents(upcoming)
 
       const names: Record<string, string[]> = {}
+      const lists: Record<string, Attendee[]> = {}
       await Promise.all(upcoming.map(async e => {
         const { data: regs } = await supabase
           .from('event_registrations')
-          .select('name')
+          .select('name, guests')
           .eq('event_slug', e.event_slug)
           .is('cancelled_at', null)
           .order('created_at', { ascending: false })
-          .limit(5)
-        names[e.event_slug] = (regs ?? []).map(r => r.name)
+        const all = (regs ?? []) as Attendee[]
+        names[e.event_slug] = all.slice(0, 5).map(r => r.name)
+        lists[e.event_slug] = [...all].sort((a, b) => a.name.localeCompare(b.name, 'sv'))
       }))
       setLatestNames(names)
+      setAttendees(lists)
     }
     load()
   }, [])
@@ -86,6 +95,21 @@ export default function DashboardPage() {
               <p className="mt-2 pt-2 border-t border-linen-200 text-xs text-warm-500">
                 Senast: {latestNames[e.event_slug].join(', ')}
               </p>
+            )}
+            {attendees[e.event_slug]?.length > 0 && (
+              <details className="mt-2 pt-2 border-t border-linen-200">
+                <summary className="text-sm text-sage-700 font-medium cursor-pointer select-none">
+                  Visa alla
+                </summary>
+                <ul className="mt-2 divide-y divide-linen-100 text-sm">
+                  {attendees[e.event_slug].map((a, i) => (
+                    <li key={i} className="flex justify-between py-1.5 text-warm-800">
+                      <span>{a.name}</span>
+                      <span className="text-warm-600 tabular-nums">{a.guests}</span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
             )}
           </div>
         )
