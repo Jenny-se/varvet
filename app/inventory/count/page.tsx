@@ -367,10 +367,14 @@ export default function StocktakePage() {
                         className="w-9 h-9 flex items-center justify-center rounded-lg border border-cream-400 text-warm-600 active:bg-cream-200">
                         <Plus className="w-4 h-4" />
                       </button>
-                      <button type="button" aria-label="Stämmer med appen" title="Stämmer med appen"
-                        onClick={() => saveCount(item, item.quantity_in_stock)}
+                      {/* Bekräftar siffran i rutan: inskriven, redan räknad, annars appens saldo */}
+                      <button type="button" aria-label="Bekräfta antal" title="Bekräfta antal"
+                        onClick={() => {
+                          if (drafts[item.id]?.trim()) commitDraft(item)
+                          else saveCount(item, c?.counted_qty ?? item.quantity_in_stock)
+                        }}
                         className={`w-9 h-9 flex items-center justify-center rounded-lg border ${
-                          c && diff === 0 ? 'bg-sage-500 border-sage-500 text-white' : 'border-sage-300 text-sage-600 active:bg-sage-100'}`}>
+                          c ? 'bg-sage-500 border-sage-500 text-white' : 'border-sage-300 text-sage-600 active:bg-sage-100'}`}>
                         <Check className="w-4 h-4" />
                       </button>
                     </div>
