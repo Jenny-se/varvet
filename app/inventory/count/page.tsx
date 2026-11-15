@@ -24,6 +24,25 @@ function labelOf(item: InventoryItem) {
   return item.colorway ?? item.product_name
 }
 
+// Jämför siffror som tal (även decimaler), så 2.25 mm < 2.5 mm och 60 cm < 100 cm
+function compareNatural(a: string, b: string) {
+  const pa = a.split(/(d+(?:[.,]d+)?)/), pb = b.split(/(d+(?:[.,]d+)?)/)
+  for (let i = 0; i < Math.min(pa.length, pb.length); i++) {
+    const diff = i % 2
+      ? parseFloat(pa[i].replace(',', '.')) - parseFloat(pb[i].replace(',', '.'))
+      : pa[i].localeCompare(pb[i], 'sv', { sensitivity: 'base' })
+    if (diff) return diff
+  }
+  return pa.length - pb.length
+}
+
+// Xolla sorteras på färgnamn, övrigt på nummer
+function compareInGroup(a: InventoryItem, b: InventoryItem) {
+  return a.product_name.startsWith('Xolla')
+    ? labelOf(a).localeCompare(labelOf(b), 'sv')
+    : compareNatural(labelOf(a), labelOf(b))
+}
+
 export default function StocktakePage() {
   const { session } = useAuth()
   const userEmail = session?.user?.email ?? null
@@ -114,7 +133,7 @@ export default function StocktakePage() {
       if (!map.has(g)) map.set(g, [])
       map.get(g)!.push(i)
     }
-    return Array.from(map.entries())
+    return Array.from(map.entries()).map(([g, list]) => [g, list.sort(compareInGroup)] as [string, InventoryItem[]])
   }, [filtered])
 
   const countedTotal = Object.keys(counts).filter(id => itemById[id]).length
