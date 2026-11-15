@@ -186,14 +186,27 @@ export default function StocktakePage() {
     }
   }
 
-  function commitDraft(item: InventoryItem) {
+  // Ändrade siffror räknas först när bocken trycks
+  function setDraft(item: InventoryItem, value: string) {
+    setDrafts(d => ({ ...d, [item.id]: value }))
+  }
+
+  function stepDraft(item: InventoryItem, delta: number) {
     const raw = drafts[item.id]
-    if (raw === undefined) return
+    const base = raw?.trim() ? parseInt(raw, 10) : (counts[item.id]?.counted_qty ?? item.quantity_in_stock)
+    setDraft(item, String(Math.max(0, base + delta)))
+  }
+
+  // Bocken: spara siffran i rutan (tom ruta = appens saldo). Bockad rad utan ändring avbockas.
+  function toggleConfirm(item: InventoryItem) {
+    const raw = drafts[item.id]
+    if (raw === undefined && counts[item.id]) { saveCount(item, null); return }
     setDrafts(d => { const n = { ...d }; delete n[item.id]; return n })
-    if (raw.trim() === '') { saveCount(item, null); return }
-    const n = parseInt(raw, 10)
+    const n = raw?.trim() ? parseInt(raw, 10) : (counts[item.id]?.counted_qty ?? item.quantity_in_stock)
     if (!isNaN(n) && n >= 0) saveCount(item, n)
   }
+
+  const unconfirmed = Object.keys(drafts).length
 
   async function applyStocktake() {
     if (!stocktake) return
@@ -335,21 +348,24 @@ export default function StocktakePage() {
                   const c = counts[item.id]
                   const draft = drafts[item.id]
                   const value = draft ?? (c ? String(c.counted_qty) : '')
-                  const diff = c ? c.counted_qty - c.system_qty : 0
+                  const confirmed = !!c && draft === undefined
+                  const shown = value.trim() ? parseInt(value, 10) : null
+                  const diff = shown !== null ? shown - (c?.system_qty ?? item.quantity_in_stock) : 0
                   return (
-                    <div key={item.id} className={`flex items-center gap-2 px-3 py-2.5 ${c ? (diff !== 0 ? 'bg-amber-50/60' : 'bg-sage-50/50') : ''}`}>
+                    <div key={item.id} className={`flex items-center gap-2 px-3 py-2.5 ${confirmed ? (diff !== 0 ? 'bg-amber-50/60' : 'bg-sage-50/50') : ''}`}>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-warm-900 truncate">{labelOf(item)}</p>
                         <p className="text-xs text-warm-400">
                           I appen: <span className="tabular-nums">{item.quantity_in_stock}</span>
-                          {c && diff !== 0 && (
+                          {diff !== 0 && (
                             <span className="ml-2 font-semibold text-amber-700 tabular-nums">{diff > 0 ? '+' : ''}{diff}</span>
                           )}
                           {saving[item.id] && <span className="ml-2 text-warm-300">sparar…</span>}
+                          {draft !== undefined && !saving[item.id] && <span className="ml-2 text-warm-400">ej avbockad</span>}
                         </p>
                       </div>
                       <button type="button" aria-label="Minska"
-                        onClick={() => saveCount(item, Math.max(0, (c?.counted_qty ?? item.quantity_in_stock) - 1))}
+                        onClick={() => stepDraft(item, -1)}
                         className="w-9 h-9 flex items-center justify-center rounded-lg border border-cream-400 text-warm-600 active:bg-cream-200">
                         <Minus className="w-4 h-4" />
                       </button>
@@ -358,23 +374,18 @@ export default function StocktakePage() {
                         className="w-14 h-9 text-center border border-cream-400 rounded-lg text-base font-semibold tabular-nums placeholder:font-normal placeholder:text-warm-300 focus:outline-none focus:ring-2 focus:ring-sage-300"
                         placeholder={String(item.quantity_in_stock)}
                         value={value}
-                        onChange={e => setDrafts(d => ({ ...d, [item.id]: e.target.value.replace(/[^0-9]/g, '') }))}
-                        onBlur={() => commitDraft(item)}
+                        onChange={e => setDraft(item, e.target.value.replace(/[^0-9]/g, ''))}
                         onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
                       />
                       <button type="button" aria-label="Öka"
-                        onClick={() => saveCount(item, (c?.counted_qty ?? item.quantity_in_stock) + 1)}
+                        onClick={() => stepDraft(item, 1)}
                         className="w-9 h-9 flex items-center justify-center rounded-lg border border-cream-400 text-warm-600 active:bg-cream-200">
                         <Plus className="w-4 h-4" />
                       </button>
-                      {/* Bekräftar siffran i rutan: inskriven, redan räknad, annars appens saldo */}
-                      <button type="button" aria-label="Bekräfta antal" title="Bekräfta antal"
-                        onClick={() => {
-                          if (drafts[item.id]?.trim()) commitDraft(item)
-                          else saveCount(item, c?.counted_qty ?? item.quantity_in_stock)
-                        }}
+                      <button type="button" aria-label={confirmed ? 'Ångra avbockning' : 'Bocka av'} title={confirmed ? 'Ångra avbockning' : 'Bocka av'}
+                        onClick={() => toggleConfirm(item)}
                         className={`w-9 h-9 flex items-center justify-center rounded-lg border ${
-                          c ? 'bg-sage-500 border-sage-500 text-white' : 'border-sage-300 text-sage-600 active:bg-sage-100'}`}>
+                          confirmed ? 'bg-sage-500 border-sage-500 text-white' : 'border-sage-300 text-sage-600 active:bg-sage-100'}`}>
                         <Check className="w-4 h-4" />
                       </button>
                     </div>
@@ -446,6 +457,11 @@ export default function StocktakePage() {
               <p className="text-sm text-warm-600">Inga avvikelser – allt som räknats stämmer med appen.</p>
             )}
 
+            {unconfirmed > 0 && (
+              <p className="text-sm text-amber-700">
+                {unconfirmed} ändrade rader är inte avbockade och tas inte med. Bocka av dem först om de ska räknas.
+              </p>
+            )}
             <p className="text-xs text-warm-500">
               {items.length - countedTotal > 0 && <>{items.length - countedTotal} artiklar är inte räknade och lämnas orörda. </>}
               Säljs något efter att det räknats dras det av från det räknade antalet.
