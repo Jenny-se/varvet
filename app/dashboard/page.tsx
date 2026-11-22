@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { FileText, Plus, Boxes, CalendarHeart } from 'lucide-react'
+import { FileText, Plus, Boxes, CalendarHeart, ShoppingBag, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface EventSummary {
@@ -33,8 +33,18 @@ export default function DashboardPage() {
   const [events, setEvents] = useState<EventSummary[]>([])
   const [latestNames, setLatestNames] = useState<Record<string, string[]>>({})
   const [attendees, setAttendees] = useState<Record<string, Attendee[]>>({})
+  const [kitOrders, setKitOrders] = useState<{ unhandled: number; latest: string | null } | null>(null)
 
   useEffect(() => {
+    async function loadKitOrders() {
+      const [{ count }, { data: latest }] = await Promise.all([
+        supabase.from('kit_orders').select('id', { count: 'exact', head: true }).in('status', ['ny', 'bekraftad']), // inte skickade eller hämtade
+        supabase.from('kit_orders').select('created_at').order('created_at', { ascending: false }).limit(1),
+      ])
+      setKitOrders({ unhandled: count ?? 0, latest: latest?.[0]?.created_at ?? null })
+    }
+    loadKitOrders()
+
     async function load() {
       const { data } = await supabase.from('event_registration_summary').select('*')
       const today = new Date().toISOString().slice(0, 10)
@@ -114,6 +124,27 @@ export default function DashboardPage() {
           </div>
         )
       })}
+
+      {kitOrders && (
+        <Link
+          href="/kit-orders"
+          className="w-full max-w-xs p-5 bg-white rounded-2xl shadow-sm border border-linen-200 hover:bg-cream-50 active:scale-95 transition-all"
+        >
+          <div className="flex items-center gap-2 text-warm-600 text-sm">
+            <ShoppingBag className="w-4 h-4" />
+            <span className="flex-1">Kitbeställningar</span>
+            <ChevronRight className="w-4 h-4 text-warm-400" />
+          </div>
+          <p className={`mt-1 text-3xl font-semibold ${kitOrders.unhandled > 0 ? 'text-amber-700' : 'text-warm-800'}`}>
+            {kitOrders.unhandled} <span className="text-lg font-normal text-warm-600">ej skickade</span>
+          </p>
+          <p className="text-sm text-warm-600">
+            {kitOrders.latest
+              ? `Senaste beställning ${new Date(kitOrders.latest).toLocaleDateString('sv-SE', { day: 'numeric', month: 'long' })}`
+              : 'Inga beställningar än'}
+          </p>
+        </Link>
+      )}
 
       <Link
         href="/receipts/new"
