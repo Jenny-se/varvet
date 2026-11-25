@@ -29,6 +29,9 @@ const STATUS_ORDER: KitOrderStatus[] = ['ny', 'bekraftad', 'skickad', 'hamtad', 
 const KIT_LABELS: Record<string, string> = {
   'haugvag-chamotte': 'Haugvag i Chamotte',
   'sticka-tidlosa-plagg': 'Sticka tidlösa plagg',
+  'xolla-bauma': 'Xolla Bauma',
+  'xolla-pastoreta': 'Xolla Pastoreta',
+  'istex-lettlopi': 'Léttlopi',
 }
 
 // Vilken bok qty_book avser, per kit
@@ -45,6 +48,7 @@ function orderLines(o: KitOrder) {
     [o.qty_light, 'Chamotte ljus'],
     [o.qty_accent, 'Accentfärg 20 g'],
     [o.qty_book, book],
+    ...(o.items ?? []).map(i => [i.qty, `${KIT_LABELS[o.kit_slug] ?? 'Garn'} ${i.color}`]),
   ].filter(([n]) => (n as number) > 0) as [number, string][]
 }
 
@@ -93,6 +97,9 @@ export default function KitOrdersPage() {
     onBook: active.filter(o => o.kit_slug === 'haugvag-chamotte').reduce((s, o) => s + o.qty_book, 0),
     tpBook: active.filter(o => o.kit_slug === 'sticka-tidlosa-plagg').reduce((s, o) => s + o.qty_book, 0),
     tpSigned: active.filter(o => o.kit_slug === 'sticka-tidlosa-plagg' && o.book_signed).reduce((s, o) => s + o.qty_book, 0),
+    bauma: active.filter(o => o.kit_slug === 'xolla-bauma').reduce((s, o) => s + (o.items ?? []).reduce((n, i) => n + i.qty, 0), 0),
+    lettlopi: active.filter(o => o.kit_slug === 'istex-lettlopi').reduce((s, o) => s + (o.items ?? []).reduce((n, i) => n + i.qty, 0), 0),
+    pastoreta: active.filter(o => o.kit_slug === 'xolla-pastoreta').reduce((s, o) => s + (o.items ?? []).reduce((n, i) => n + i.qty, 0), 0),
     sek: active.reduce((s, o) => s + Number(o.total_sek), 0),
   }
 
@@ -100,7 +107,7 @@ export default function KitOrdersPage() {
     <div className="p-6 md:p-8 max-w-5xl mx-auto">
       <div className="mb-5">
         <h1 className="text-xl font-semibold text-warm-900">Kitbeställningar</h1>
-        <p className="text-sm text-warm-500 mt-1">Beställningar från formulären på hemsidan (Haugvag-kit och Sticka tidlösa plagg).</p>
+        <p className="text-sm text-warm-500 mt-1">Beställningar från formulären på hemsidan (Haugvag-kit, Sticka tidlösa plagg, Xolla Bauma, Pastoreta och Léttlopi).</p>
       </div>
 
       {/* Totals, so you know how much yarn and how many books to set aside */}
@@ -113,6 +120,9 @@ export default function KitOrdersPage() {
           ['Accentfärg 20 g', totals.accent, 'nystan'],
           ['Ön och skogen', totals.onBook, 'böcker'],
           ['Sticka tidlösa plagg', totals.tpBook, `böcker, varav ${totals.tpSigned} signerade`],
+          ['Xolla Bauma', totals.bauma, 'nystan'],
+          ['Xolla Pastoreta', totals.pastoreta, 'nystan'],
+          ['Léttlopi', totals.lettlopi, 'nystan'],
           ['Summa', Math.round(totals.sek).toLocaleString('sv-SE'), 'kr exkl. frakt'],
         ] as [string, string | number, string][]).map(([label, value, sub]) => (
           <div key={label} className="bg-white border border-linen-200 rounded-xl p-3">

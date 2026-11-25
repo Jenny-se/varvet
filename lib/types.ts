@@ -88,6 +88,7 @@ export interface KitOrder {
   qty_book: number
   qty_accent: number
   book_signed: boolean
+  items: { color: string; qty: number }[] | null // garnfärger, t.ex. Xolla Bauma
   accent_colors: string | null
   message: string | null
   total_sek: number
